@@ -8,7 +8,7 @@ Switching from a complex blogging platform to a lightweight, file-based blog is 
 
 I wanna be in control of the urls for articles, use the templating engine I prefer, and have some fun writing javascript.  I also want to be able to start my blog up locally on a node http server to tweak it and test it, and not have to generate the static site to view every change.  For the live site, I want to just [clone a git repo][blog repo] on a server, and run ```> node generate.js``` to create a static site for Apache to serve.  [So I did][blog repo], it was fun.  Feel free to check it out, maybe [fork][blog repo] it and see what you think.
 
-##dropbox what?
+##i can haz dropbox blog?
 
 [Check out][dropbox publish] what [Joe Hewitt][hewitt] is doing to integrate [Dropbox][] into his blogging solution.  I dig it.
 
