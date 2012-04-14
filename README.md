@@ -2,6 +2,12 @@
 
 This repository powers my blog, [selfcontained.us][].  It's a node.js application that can both serve a markdown file based blog, and also generate a static site from those files as well.  Feel free to fork it and modify it for your own needs.
 
+##Install dependencies
+
+```
+> npm install
+```
+
 ##Run the blog with node.js
 
 For development purposes, it's easier to run the blog as a node.js http server.  Template/CSS changes are picked up automatically, but new/modified articles require a restart.
