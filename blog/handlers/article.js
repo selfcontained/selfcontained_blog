@@ -6,14 +6,16 @@ var path = require('path'),
 function getTemplateData(article) {
 	return {
 		recent_articles : articleAPI.getRecent(),
-		article : article
+		article : article,
+		title : article.title,
+		keywords : article.tags.join()
 	};
 }
 
 module.exports = {
 
-	register : function(app) {
-		app.get(/^\/(\d){4}\/(\d){2}\/(\d){2}\/(.+)\/$/, function(req, res) {
+	register : function(blog) {
+		blog.app().get(/^\/(\d){4}\/(\d){2}\/(\d){2}\/(.+)\/$/, function(req, res) {
 			var article = articleAPI.get(req.params[3]);
 			if(article && article.publish) {
 				res.render('article', getTemplateData(article));
@@ -26,7 +28,7 @@ module.exports = {
 		});
 	},
 
-	generate : function(dir) {
+	generate : function(blog, dir) {
 		articleAPI.getAll().forEach(function(article) {
 			if(article.publish) {
 				handler.createHtmlFile(

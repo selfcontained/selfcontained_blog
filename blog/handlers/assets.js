@@ -26,8 +26,8 @@ function compileCSS(filename, cb) {
 
 module.exports = {
 
-	register : function(app) {
-		app.get('/css/:filename.css', function(req, res) {
+	register : function(blog) {
+		blog.app().get('/css/:filename.css', function(req, res) {
 			var filename = req.param('filename')+'.less';
 
 			compileCSS(filename, function(css) {
@@ -37,7 +37,7 @@ module.exports = {
 		});
 	},
 
-	generate : function(dir) {
+	generate : function(blog, dir) {
 		compileCSS('blog.less', function(css) {
 			var cssDir = path.join(dir, 'css'),
 				cssFile = path.join(cssDir, 'blog.css');

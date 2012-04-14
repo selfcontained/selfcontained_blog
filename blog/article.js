@@ -1,5 +1,5 @@
 var	path = require('path'),
-	authors = require('../config/authors.json'),
+	authors = require('./blog.json').authors,
 	ARTICLE_CONFIG = 'article.json',
 	ARTICLE_CONTENT = 'article.md',
 	ARTICLES_PATH = path.normalize(__dirname+'/../articles'),

@@ -1,0 +1,16 @@
+{
+	"title" : "selfcontained",
+	"description" : "Blog on software developlment by Brad Harris",
+	"keywords" : [
+		"software",
+		"web development",
+		"brad harris"
+	],
+	"authors" : {
+		"bradharris" : {
+			"name" : "Brad Harris",
+			"gravatar" : "bmharris@gmail.com",
+			"github" : "bmharris"
+		}
+	}
+}

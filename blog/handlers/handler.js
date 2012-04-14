@@ -7,10 +7,10 @@ module.exports = {
 	createHtmlFile : function(dest, template, data) {
 		var templateFile = path.join(__dirname, '/../../theme/templates/', template+'.jade'),
 			templateString = fs.readFileSync(templateFile, 'utf8'),
-			template = require('jade').compile(templateString, {
+			renderer = require('jade').compile(templateString, {
 				filename : templateFile
 			}),
-			html = template(data),
+			html = renderer(data),
 			destDir = '/'+(dest.split('/').slice(1, -1).join('/'));
 
 		if(!path.existsSync(destDir)) {
@@ -20,4 +20,4 @@ module.exports = {
 		console.log('created file: ', dest);
 	}
 
-}
+};

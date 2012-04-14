@@ -1,6 +1,7 @@
 var Blog = function() {
 
 	var app,
+		config = require('./blog.json'),
 		handlers = [
 		require('./handlers/assets.js'),
 		require('./handlers/error.js'),
@@ -17,7 +18,8 @@ var Blog = function() {
 		 * Create and setup http server for serving blog dynamically
 		 */
 		createApp : function(config) {
-			var express = require('express');
+			var express = require('express'),
+				self = this;
 
 			app = express.createServer();
 			app.configure(function(){
@@ -31,7 +33,7 @@ var Blog = function() {
 				app.use(app.router);
 			});
 			handlers.forEach(function(handler) {
-				handler.register && handler.register(app);
+				handler.register && handler.register(self);
 			});
 			return this;
 		},
@@ -50,7 +52,8 @@ var Blog = function() {
 		 * Create static version of blog in specified directory
 		 */
 		generate : function(dir) {
-			var fs = require('fs');
+			var fs = require('fs'),
+				self = this;
 
 			if(require('path').existsSync(dir)) {
 				require('wrench').rmdirSyncRecursive(dir);
@@ -62,7 +65,7 @@ var Blog = function() {
 				}else {
 					console.log('create directory: ', dir);
 					handlers.forEach(function(handler) {
-						handler.generate(dir);
+						handler.generate(self, dir);
 					});
 				}
 			});
@@ -75,6 +78,14 @@ var Blog = function() {
 			app.listen(port);
 			console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 			return this;
+		},
+
+		config : function() {
+			return config;
+		},
+
+		app : function() {
+			return app;
 		}
 
 	};
