@@ -31,7 +31,6 @@ Blog.prototype = {
 
 		this.app = express.createServer();
 		this.app.configure(function(){
-			console.log(self.config);
 			self.app.set('views', config.templates);
 			self.app.set('view engine', config.view_engine);
 			self.app.set('view options', config.view_options);

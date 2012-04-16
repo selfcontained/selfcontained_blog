@@ -52,7 +52,7 @@ The properties should be pretty self-explanatory.
 
 +	```author``` maps to the config file in ```config/authors.json```, which is where meta-deta about the author is stored.
 +	```publish``` can be true/false.  If false, they won't be available or generated for the site.
-+	```date``` should be formatted as ```YYYY-MM-DD HH:mm:ss``` ( this will be more flexible shortly, I was lazy )
++	```date``` should be formatted as a string Date.parse can handle correctly
 
 ##Theme
 

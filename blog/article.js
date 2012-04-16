@@ -15,7 +15,7 @@ var	path = require('path'),
 
 
 var Article = module.exports = function(config) {
-	var date = moment(config.date, 'YYYY-MM-DD');
+	var date = moment(Date.parse(config.date));
 
 	this.author = config.author;
 	this.title = config.title;
