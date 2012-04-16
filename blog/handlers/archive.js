@@ -1,11 +1,10 @@
-var handler = require('./handler.js'),
-	articleAPI = require('../article.js');
+var handler = require('./handler.js');
 
 function getTemplateData(blog) {
 	var config = blog.config();
 	return {
-		recent_articles : articleAPI.getRecent(),
-		articles : articleAPI.getAll(),
+		recent_articles : blog.api().getRecent(),
+		articles : blog.api().getAll(),
 		title : 'archive - ' + config.title,
 		keywords : config.keywords
 	};

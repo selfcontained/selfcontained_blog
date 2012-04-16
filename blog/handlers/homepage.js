@@ -1,12 +1,11 @@
 var path = require('path'),
-	handler = require('./handler.js'),
-	articleAPI = require('../article.js');
+	handler = require('./handler.js');
 
 function getTemplateData(blog) {
 	var config = blog.config();
 	return {
-		articles : articleAPI.getRecent(10),
-		recent_articles : articleAPI.getRecent(),
+		articles : blog.api().getRecent(10),
+		recent_articles : blog.api().getRecent(),
 		title : config.title,
 		keywords : config.keywords
 	};

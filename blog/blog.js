@@ -1,16 +1,17 @@
-var Blog = function() {
-
+var Blog = function(cfg) {
+	//todo: convert to protoype for consistency
 	var app,
-		config = require('./blog.json'),
+		config = cfg,
+		api = require('./article.api.js').create(),
 		handlers = [
-		require('./handlers/assets.js'),
-		require('./handlers/error.js'),
-		require('./handlers/homepage.js'),
-		require('./handlers/article.js'),
-		require('./handlers/archive.js'),
-		require('./handlers/feed.js'),
-		require('./handlers/tag.js')
-	];
+			require('./handlers/assets.js'),
+			require('./handlers/error.js'),
+			require('./handlers/homepage.js'),
+			require('./handlers/article.js'),
+			require('./handlers/archive.js'),
+			require('./handlers/feed.js'),
+			require('./handlers/tag.js')
+		];
 
 	return {
 
@@ -42,8 +43,10 @@ var Blog = function() {
 		 * Load article data into memory
 		 */
 		load : function(cb) {
-			var self = this;
-			require('./article.js').load(function() {
+			var self = this,
+				articlePath = require('path').normalize(__dirname+'/..'+config.articles);
+
+			api.load(articlePath, function() {
 				cb.call(self);
 			});
 		},
@@ -86,6 +89,10 @@ var Blog = function() {
 
 		app : function() {
 			return app;
+		},
+
+		api : function() {
+			return api;
 		}
 
 	};
@@ -93,8 +100,8 @@ var Blog = function() {
 
 module.exports = {
 
-	create : function() {
-		return new Blog();
+	create : function(config) {
+		return new Blog(config);
 	}
 
 };

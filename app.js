@@ -1,5 +1,7 @@
-require('./blog')
-	.create()
+var blogConfig = require('./blog.json');
+
+require('./blog/blog.js')
+	.create(blogConfig)
 	.load(function() {
 		this.createApp({
 			templates : __dirname+'/theme/templates',

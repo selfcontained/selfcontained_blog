@@ -1,11 +1,10 @@
 var path = require('path'),
-	handler = require('./handler.js'),
-	articleAPI = require('../article.js');
+	handler = require('./handler.js');
 
 
-function getTemplateData(article) {
+function getTemplateData(blog, article) {
 	return {
-		recent_articles : articleAPI.getRecent(),
+		recent_articles : blog.api().getRecent(),
 		article : article,
 		title : article.title,
 		keywords : article.tags.join()
@@ -16,25 +15,25 @@ module.exports = {
 
 	register : function(blog) {
 		blog.app().get(/^\/(\d){4}\/(\d){2}\/(\d){2}\/(.+)\/$/, function(req, res) {
-			var article = articleAPI.get(req.params[3]);
+			var article = blog.api().get(req.params[3]);
 			if(article && article.publish) {
-				res.render('article', getTemplateData(article));
+				res.render('article', getTemplateData(blog, article));
 			}else {
 				res.render('404', {
 					status: 404,
-					recent_articles : articleAPI.getRecent()
+					recent_articles : blog.api().getRecent()
 				});
 			}
 		});
 	},
 
 	generate : function(blog, dir) {
-		articleAPI.getAll().forEach(function(article) {
+		blog.api().getAll().forEach(function(article) {
 			if(article.publish) {
 				handler.createHtmlFile(
 					path.join(dir, article.path, 'index.html'),
 					'article',
-					getTemplateData(article)
+					getTemplateData(blog, article)
 				);
 			}
 		});

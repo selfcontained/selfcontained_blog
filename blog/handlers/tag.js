@@ -1,12 +1,11 @@
 var path = require('path'),
-	handler = require('./handler.js'),
-	articleAPI = require('../article.js');
+	handler = require('./handler.js');
 
 function getTemplateData(blog, tag) {
 	var config = blog.config();
 	return {
-		articles : articleAPI.getByTag(tag),
-		recent_articles : articleAPI.getRecent(),
+		articles : blog.api().getByTag(tag),
+		recent_articles : blog.api().getRecent(),
 		tag : tag,
 		title : tag + ' - ' + config.title,
 		keywords : config.keywords
@@ -22,7 +21,7 @@ module.exports = {
 	},
 
 	generate : function(blog, dir) {
-		Object.keys(articleAPI.tags()).forEach(function(tag) {
+		Object.keys(blog.api().tags()).forEach(function(tag) {
 			handler.createHtmlFile(
 				path.join(dir, 'tag', tag, 'index.html'),
 				'tag',

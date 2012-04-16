@@ -1,10 +1,9 @@
 var path = require('path'),
-	handler = require('./handler.js'),
-	articleAPI = require('../article.js');
+	handler = require('./handler.js');
 
 function getTemplateData(blog) {
 	return {
-		articles : articleAPI.getAll(),
+		articles : blog.api().getAll(),
 		title : blog.config().title
 	};
 }
