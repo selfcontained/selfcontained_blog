@@ -27,7 +27,7 @@ function compileCSS(filename, cb) {
 module.exports = {
 
 	register : function(blog) {
-		blog.app().get('/css/:filename.css', function(req, res) {
+		blog.app.get('/css/:filename.css', function(req, res) {
 			var filename = req.param('filename')+'.less';
 
 			compileCSS(filename, function(css) {
