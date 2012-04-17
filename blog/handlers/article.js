@@ -1,7 +1,6 @@
 var path = require('path'),
 	handler = require('./handler.js');
 
-
 function getTemplateData(blog, article) {
 	return {
 		recent_articles : blog.api.getRecent(),

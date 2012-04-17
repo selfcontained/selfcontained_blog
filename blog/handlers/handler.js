@@ -1,6 +1,7 @@
 var fs = require('fs'),
 	path = require('path'),
-	wrench = require('wrench');
+	wrench = require('wrench'),
+	blog = require('../blog.js');
 
 module.exports = {
 
@@ -17,7 +18,7 @@ module.exports = {
 			wrench.mkdirSyncRecursive(destDir);
 		}
 		fs.writeFileSync(dest, html);
-		console.log('created file: ', dest);
+		blog.info('created file: ', dest);
 	}
 
 };

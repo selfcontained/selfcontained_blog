@@ -65,10 +65,6 @@ ArticleAPI.prototype = {
 			articles.push(self.get(slug));
 		});
 		return articles;
-	},
-
-	tags : function() {
-		return this.tags;
 	}
 
 };

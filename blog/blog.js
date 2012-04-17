@@ -1,16 +1,17 @@
-var Blog = function(config) {
-	this.config = config;
-	this.api = require('./article.api.js').create(),
-	this.handlers = [
-		require('./handlers/assets.js'),
-		require('./handlers/error.js'),
-		require('./handlers/homepage.js'),
-		require('./handlers/article.js'),
-		require('./handlers/archive.js'),
-		require('./handlers/feed.js'),
-		require('./handlers/tag.js')
-	];
-};
+require('./js_utils');
+
+function addGravatarHash(authors) {
+	var key,
+		crypto = require('crypto');
+	for(key in authors) {
+		if (authors[key].gravatar) {
+			authors[key].gravatar_hash = crypto.createHash('md5').update(authors[key].gravatar).digest("hex");
+		}
+	}
+	return authors;
+}
+
+var Blog = function() {};
 
 Blog.prototype = {
 
@@ -22,12 +23,42 @@ Blog.prototype = {
 
 	handlers : null,
 
+	authors : null,
+
+	log : null,
+
+	init : function(config) {
+		this.init = function() {};
+
+		this.config = config;
+		require('winston').cli().extend(this);
+		this.api = require('./article.api.js').create();
+		this.authors = addGravatarHash(config.authors);
+		this.handlers = [
+			require('./handlers/assets.js'),
+			require('./handlers/error.js'),
+			require('./handlers/homepage.js'),
+			require('./handlers/article.js'),
+			require('./handlers/archive.js'),
+			require('./handlers/feed.js'),
+			require('./handlers/tag.js')
+		];
+		return this;
+	},
+
 	/**
 	 * Create and setup http server for serving blog dynamically
 	 */
 	createApp : function(config) {
 		var express = require('express'),
 			self = this;
+
+		config = Object.extend({
+			templates : __dirname+'/../theme/templates',
+			view_engine: 'jade',
+			view_options: { layout: false },
+			view_cache: false,
+		}, (config||{}));
 
 		this.app = express.createServer();
 		this.app.configure(function(){
@@ -67,13 +98,13 @@ Blog.prototype = {
 
 		if(require('path').existsSync(dir)) {
 			require('wrench').rmdirSyncRecursive(dir);
-			console.log('removed directory: ', dir);
+			this.info('removed directory: %s', dir);
 		}
 		fs.mkdir(dir, function(err) {
 			if(err) {
-				console.log(err);
+				self.info(err);
 			}else {
-				console.log('create directory: ', dir);
+				self.info('Created directory: %s', dir);
 				self.handlers.forEach(function(handler) {
 					handler.generate(self, dir);
 				});
@@ -86,16 +117,10 @@ Blog.prototype = {
 	 */
 	listen : function(port) {
 		this.app.listen(port);
-		console.log("Express server listening on port %d in %s mode", this.app.address().port, this.app.settings.env);
+		this.info("Express server listening.", { port : this.app.address().port } );
 		return this;
 	}
 
 };
 
-module.exports = {
-
-	create : function(config) {
-		return new Blog(config);
-	}
-
-};
+module.exports = new Blog();

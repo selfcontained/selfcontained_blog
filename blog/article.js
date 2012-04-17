@@ -1,7 +1,4 @@
 var	path = require('path'),
-	//todo: pull this from blog instead of directly from config file
-	authors = require('./../blog.json').authors,
-	crypto = require('crypto'),
 	fs = require('fs'),
 	moment = require('moment'),
 	marked = require('marked').setOptions({
@@ -11,7 +8,8 @@ var	path = require('path'),
 		highlight: function(code, lang) {
 			return require('highlight').Highlight(code);
 		}
-	});
+	}),
+	blog = require('./blog.js');
 
 
 var Article = module.exports = function(config) {
@@ -26,9 +24,6 @@ var Article = module.exports = function(config) {
 	this.publish = config.publish;
 	this.tags = config.tags;
 	this.path = date.format('/YYYY/MM/DD/')+config.slug+'/';
-	if (this.author.gravatar && !this.author.gravatar_hash) {
-		this.author.gravatar_hash = crypto.createHash('md5').update(this.author.gravatar).digest("hex");
-	}
 };
 Article.prototype = {
 
@@ -61,7 +56,7 @@ Article.create = function(dir) {
 		config = require(json);
 
 		if(config.publish) {
-			config.author = authors[config.author];
+			config.author = blog.authors[config.author];
 			config.slug = dir.split('/').pop();
 			config.content = marked(fs.readFileSync(md, 'utf8'));
 			article = new Article(config);

@@ -1,6 +1,7 @@
 var less = require('less'),
 	fs = require('fs'),
 	path = require('path'),
+	blog = require('../blog.js'),
 	LESS_PATH = path.normalize(__dirname+'/../../theme/css');
 
 function compileCSS(filename, cb) {
@@ -43,12 +44,12 @@ module.exports = {
 				cssFile = path.join(cssDir, 'blog.css');
 			fs.mkdirSync(cssDir);
 			fs.writeFileSync(cssFile, css);
-			console.log('created css file: ', cssFile);
+			blog.info('created css file: ', cssFile);
 		});
 
 		//copy static resources into destination root
 		require('wrench').copyDirSyncRecursive(__dirname+'/../../theme/static', dir);
-		console.log('copied static resources');
+		blog.info('copied static resources');
 	}
 
 };

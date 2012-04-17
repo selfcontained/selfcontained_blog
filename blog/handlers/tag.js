@@ -21,7 +21,7 @@ module.exports = {
 	},
 
 	generate : function(blog, dir) {
-		Object.keys(blog.api.tags()).forEach(function(tag) {
+		Object.keys(blog.api.tags).forEach(function(tag) {
 			handler.createHtmlFile(
 				path.join(dir, 'tag', tag, 'index.html'),
 				'tag',
