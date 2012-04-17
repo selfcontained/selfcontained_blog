@@ -11,15 +11,16 @@ ArticleAPI.prototype = {
 	tags : {},
 
 	load : function (articlePath, cb) {
-		if(!articlePath) throw new Error('must specify path of articles');
-
-		var self = this,
+		var err = null,
+			self = this,
 			path = require('path');
+
+		if(!articlePath) return cb.call(this, new Error('must specify path of articles'));
 
 		this.path = articlePath;
 
 		require('fs').readdir(this.path, function(err, files) {
-			if (err) throw new Error(err);
+			if (err) return cb.call(self, err);
 
 			var article;
 			files.forEach(function(folder) {
@@ -42,7 +43,7 @@ ArticleAPI.prototype = {
 					self.tags[tag].push(article.slug);
 				});
 			});
-			(cb||function(){})(self);
+			cb.call(self);
 		});
 	},
 

@@ -4,7 +4,7 @@ var path = require('path'),
 function getTemplateData(blog) {
 	return {
 		articles : blog.api.getAll(),
-		title : blog.config.title
+		title : blog.title
 	};
 }
 

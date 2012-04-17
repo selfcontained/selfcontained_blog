@@ -2,13 +2,12 @@ var path = require('path'),
 	handler = require('./handler.js');
 
 function getTemplateData(blog, tag) {
-	var config = blog.config;
 	return {
 		articles : blog.api.getByTag(tag),
 		recent_articles : blog.api.getRecent(),
 		tag : tag,
-		title : tag + ' - ' + config.title,
-		keywords : config.keywords
+		title : tag + ' - ' + blog.title,
+		keywords : blog.keywords
 	};
 }
 

@@ -3,7 +3,7 @@ require('./js_utils');
 function addGravatarHash(authors) {
 	var key,
 		crypto = require('crypto');
-	for(key in authors) {
+	for(key in (authors||{})) {
 		if (authors[key].gravatar) {
 			authors[key].gravatar_hash = crypto.createHash('md5').update(authors[key].gravatar).digest("hex");
 		}
@@ -15,9 +15,13 @@ var Blog = function() {};
 
 Blog.prototype = {
 
-	app : null,
+	title : null,
 
-	config : null,
+	description : null,
+
+	keywords : null,
+
+	app : null,
 
 	api : null,
 
@@ -30,7 +34,9 @@ Blog.prototype = {
 	init : function(config) {
 		this.init = function() {};
 
-		this.config = config;
+		this.title = config.title || 'icanhazaname?';
+		this.description = config.description || 'ucanhazdescription';
+		this.keywords = config.keywords || [];
 		require('winston').cli().extend(this);
 		this.api = require('./article.api.js').create();
 		this.authors = addGravatarHash(config.authors);
@@ -53,6 +59,7 @@ Blog.prototype = {
 		var express = require('express'),
 			self = this;
 
+		//defaults
 		config = Object.extend({
 			templates : __dirname+'/../theme/templates',
 			view_engine: 'jade',
@@ -80,13 +87,8 @@ Blog.prototype = {
 	/**
 	 * Load article data into memory
 	 */
-	load : function(cb) {
-		var self = this,
-			articlePath = require('path').normalize(__dirname+'/..'+this.config.articles);
-
-		this.api.load(articlePath, function() {
-			cb.call(self);
-		});
+	load : function(articles, cb) {
+		this.api.load(articles, Function.setContext(cb, this));
 	},
 
 	/**

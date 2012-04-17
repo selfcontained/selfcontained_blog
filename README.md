@@ -13,7 +13,7 @@ This repository powers my blog, [selfcontained.us][].  It's a node.js applicatio
 For development purposes, it's easier to run the blog as a node.js http server.  Template/CSS changes are picked up automatically, but new/modified articles require a restart.
 
 ```
-> node app.js
+> node server.js
 ```
 
 ##Generate a static site
