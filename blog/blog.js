@@ -62,14 +62,14 @@ Blog.prototype = {
 
 		this.app = express.createServer();
 		this.app.configure(function(){
-			self.app.set('views', config.templates);
-			self.app.set('view engine', config.view_engine);
-			self.app.set('view options', config.view_options);
-			self.app.set('view cache', config.view_cache);
-			self.app.use(express.errorHandler({ showStack: true, dumpExceptions: true }));
-			self.app.use(express.bodyParser());
-			self.app.use(express.static(__dirname + '/../theme/static'));
-			self.app.use(self.app.router);
+			this.set('views', config.templates);
+			this.set('view engine', config.view_engine);
+			this.set('view options', config.view_options);
+			this.set('view cache', config.view_cache);
+			this.use(express.errorHandler({ showStack: true, dumpExceptions: true }));
+			this.use(express.bodyParser());
+			this.use(express.static(__dirname + '/../theme/static'));
+			this.use(this.router);
 		});
 		this.handlers.forEach(function(handler) {
 			handler.register && handler.register(self);
