@@ -64,7 +64,7 @@ Blog.prototype = {
 			templates : __dirname+'/../theme/templates',
 			view_engine: 'jade',
 			view_options: { layout: false },
-			view_cache: false,
+			view_cache: false
 		}, (config||{}));
 
 		this.app = express.createServer();
