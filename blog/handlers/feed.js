@@ -12,6 +12,7 @@ module.exports = {
 
 	register : function(blog) {
 		blog.app.get('/feed/rss.xml', function(req, res) {
+			blog.info('serving feed');
 			res.contentType('application/xml');
 			res.render('feed', getTemplateData(blog));
 		});

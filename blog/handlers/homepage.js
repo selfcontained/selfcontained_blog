@@ -14,6 +14,7 @@ module.exports = {
 
 	register : function(blog) {
 		blog.app.get('/', function(req, res) {
+			blog.info('serving homepage');
 			res.render('homepage', getTemplateData(blog));
 		});
 	},

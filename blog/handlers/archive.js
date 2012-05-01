@@ -13,6 +13,7 @@ module.exports = {
 
 	register : function(blog) {
 		blog.app.get('/archive/', function(req, res) {
+			blog.info('serving archive');
 			res.render('archive', getTemplateData(blog));
 		});
 	},

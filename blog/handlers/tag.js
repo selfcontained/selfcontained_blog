@@ -15,7 +15,9 @@ module.exports = {
 
 	register : function(blog) {
 		blog.app.get('/tag/:tag/', function(req, res) {
-			res.render('tag', getTemplateData(blog, req.param('tag')));
+			var tag = req.param('tag');
+			blog.info('serving tag: ', tag);
+			res.render('tag', getTemplateData(blog, tag));
 		});
 	},
 

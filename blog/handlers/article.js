@@ -15,6 +15,7 @@ module.exports = {
 	register : function(blog) {
 		blog.app.get(/^\/(\d){4}\/(\d){2}\/(\d){2}\/(.+)\/$/, function(req, res) {
 			var article = blog.api.get(req.params[3]);
+			blog.info('serving article: ', article.title);
 			if(article && article.publish) {
 				res.render('article', getTemplateData(blog, article));
 			}else {
