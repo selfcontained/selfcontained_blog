@@ -1,16 +1,11 @@
-var ArticleAPI = function() { };
+var ArticleAPI = function() {
 
-ArticleAPI.prototype = {
+	this.path = null;
+	this.sorted = [];
+	this.keyed = {};
+	this.tags = {};
 
-	path : null,
-
-	sorted : [],
-
-	keyed : {},
-
-	tags : {},
-
-	load : function (articlePath, cb) {
+	this.load = function (articlePath, cb) {
 		var err = null,
 			self = this,
 			path = require('path');
@@ -45,35 +40,29 @@ ArticleAPI.prototype = {
 			});
 			cb.call(self);
 		});
-	},
+	};
 
-	getAll : function() {
+	this.getAll = function() {
 		return this.sorted;
-	},
+	};
 
-	getRecent : function (count) {
+	this.getRecent = function (count) {
 		return this.sorted.slice(0, count||25);
-	},
+	};
 
-	get : function (slug) {
+	this.get = function (slug) {
 		return this.keyed[slug];
-	},
+	};
 
-	getByTag : function(tag) {
+	this.getByTag = function(tag) {
 		var self = this,
 			articles = [];
 		(this.tags[tag]||[]).forEach(function(slug) {
 			articles.push(self.get(slug));
 		});
 		return articles;
-	}
+	};
 
 };
 
-module.exports = {
-
-	create : function() {
-		return new ArticleAPI();
-	}
-
-};
+module.exports = new ArticleAPI();

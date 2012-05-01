@@ -29,7 +29,7 @@ var Blog = function() {
 		this.description = config.description || 'ucanhazdescription';
 		this.keywords = config.keywords || [];
 		require('winston').cli().extend(this);
-		this.api = require('./article.api.js').create();
+		this.api = require('./article.api.js');
 		this.authors = addGravatarHash(config.authors);
 		this.handlers = [
 			require('./handlers/assets.js'),
