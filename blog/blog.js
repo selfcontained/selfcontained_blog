@@ -11,27 +11,18 @@ function addGravatarHash(authors) {
 	return authors;
 }
 
-var Blog = function() {};
+var Blog = function() {
 
-Blog.prototype = {
+	this.title = null;
+	this.description = null;
+	this.keywords = null;
+	this.app = null;
+	this.api = null;
+	this.handlers = null;
+	this.authors = null;
+	this.log = null;
 
-	title : null,
-
-	description : null,
-
-	keywords : null,
-
-	app : null,
-
-	api : null,
-
-	handlers : null,
-
-	authors : null,
-
-	log : null,
-
-	init : function(config) {
+	this.init = function(config) {
 		this.init = function() {};
 
 		this.title = config.title || 'icanhazaname?';
@@ -50,12 +41,12 @@ Blog.prototype = {
 			require('./handlers/tag.js')
 		];
 		return this;
-	},
+	};
 
 	/**
 	 * Create and setup http server for serving blog dynamically
 	 */
-	createApp : function(config) {
+	this.createApp = function(config) {
 		var express = require('express'),
 			self = this;
 
@@ -82,19 +73,19 @@ Blog.prototype = {
 			handler.register && handler.register(self);
 		});
 		return this;
-	},
+	};
 
 	/**
 	 * Load article data into memory
 	 */
-	load : function(articles, cb) {
+	this.load = function(articles, cb) {
 		this.api.load(articles, Function.setContext(cb, this));
-	},
+	};
 
 	/**
 	 * Create static version of blog in specified directory
 	 */
-	generate : function(dir) {
+	this.generate = function(dir) {
 		var fs = require('fs'),
 			self = this;
 
@@ -112,16 +103,16 @@ Blog.prototype = {
 				});
 			}
 		});
-	},
+	};
 
 	/**
 	 * Pass-thru
 	 */
-	listen : function(port) {
+	this.listen = function(port) {
 		this.app.listen(port);
 		this.info("Express server listening.", { port : this.app.address().port } );
 		return this;
-	}
+	};
 
 };
 
