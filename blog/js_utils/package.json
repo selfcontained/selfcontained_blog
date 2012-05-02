@@ -1,7 +1,0 @@
-{
-	"name": "js_utils",
-	"description": "Enhancements for objects, arrays, strings, functions, and more.",
-	"keywords": ["utilities"],
-	"main": "js_utils.js",
-	"version": "0.0.1"
-}

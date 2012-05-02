@@ -1,9 +1,8 @@
-require('./js_utils');
+var util = require('utile'),
+	crypto = require('crypto');
 
 function addGravatarHash(authors) {
-	var key,
-		crypto = require('crypto');
-	for(key in (authors||{})) {
+	for(var key in (authors||{})) {
 		if (authors[key].gravatar) {
 			authors[key].gravatar_hash = crypto.createHash('md5').update(authors[key].gravatar).digest("hex");
 		}
@@ -51,7 +50,7 @@ var Blog = function() {
 			self = this;
 
 		//defaults
-		config = Object.extend({
+		config = util.mixin({
 			templates : __dirname+'/../theme/templates',
 			view_engine: 'jade',
 			view_options: { layout: false },
@@ -79,7 +78,7 @@ var Blog = function() {
 	 * Load article data into memory
 	 */
 	this.load = function(articles, cb) {
-		this.api.load(articles, Function.setContext(cb, this));
+		this.api.load(articles, cb.bind(this));
 	};
 
 	/**
