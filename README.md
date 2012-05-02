@@ -24,6 +24,28 @@ A static version of the blog can be created as well.  This outputs simple html a
 > node generate.js
 ```
 
+##Blog Config
+High level blog config is found in ```./blog.json```.  The location and name of this are just a convention and can be specified in ```./generate.js``` and ```./server.js```.
+
+```javascript
+{
+	"title" : "selfcontained",
+	"description" : "Blog on software developlment by Brad Harris",
+	"keywords" : [
+		"software",
+		"web development",
+		"brad harris"
+	],
+	"authors" : {
+		"bradharris" : {
+			"name" : "Brad Harris",
+			"gravatar" : "bmharris@gmail.com",
+			"github" : "bmharris"
+		}
+	}
+}
+```
+
 ##Articles
 
 Articles are simply folders in the ```articles``` folder that contain two files:
