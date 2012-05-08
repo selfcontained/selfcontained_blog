@@ -12,5 +12,7 @@
 			"gravatar" : "bmharris@gmail.com",
 			"github" : "bmharris"
 		}
-	}
+	},
+	"articles": "articles",
+	"domain": "http://selfcontained.us"
 }

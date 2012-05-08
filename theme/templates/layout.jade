@@ -1,7 +1,7 @@
 !!! 5
 html(lang="en")
 	head
-		title #{title}
+		title #{pageTitle}
 		meta(name="keywords", content=keywords)
 		meta(name="author", content="Brad Harris")
 		meta(name="robots", content="index,follow")
@@ -30,7 +30,9 @@ html(lang="en")
 					block sidebar
 
 			footer
-				&copy; 2012 Brad Harris
+				|	&copy; 2012 Brad Harris |
+				|	powered by
+				a(href="https://github.com/bmharris/flipflop") flipflop
 
 		script(type="text/javascript").
 			var _gaq = _gaq || [];

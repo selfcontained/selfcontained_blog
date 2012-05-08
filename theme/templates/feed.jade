@@ -2,14 +2,14 @@
 !{xml}
 rss(version="2.0")
 	channel
-		title #{title}
-		link(href="http://selfcontained.us")
+		title #{blogTitle}
+		link(href=domain)
 		author
 			name Brad Harris
 		for article in articles
 			item
 				title #{article.title}
-				link(href="http://selfcontained.us"+article.path)
+				link(href=domain+article.path)
 				pubDate #{article.date}
 				description
 					:cdata
