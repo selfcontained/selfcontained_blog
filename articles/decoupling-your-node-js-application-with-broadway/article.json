@@ -1,0 +1,12 @@
+{
+	"author": "bradharris",
+	"title": "decoupling your node.js application with broadway",
+	"date": "2012-09-18",
+	"publish": true,
+	"tags": [
+		"javascript",
+		"node.js",
+		"broadway",
+		"decoupling"
+	]
+}
