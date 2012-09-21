@@ -1,12 +1,12 @@
 {
 	"author": "bradharris",
-	"title": "decoupling your node.js application with broadway",
-	"date": "09/18/2012",
+	"title": "using express with broadway",
+	"date": "09/20/2012",
 	"publish": true,
 	"tags": [
 		"javascript",
 		"node.js",
 		"broadway",
-		"decoupling"
+		"express"
 	]
 }
