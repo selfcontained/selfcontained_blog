@@ -38,7 +38,8 @@ At it's core, [Broadway][] provides a plugin architecture for applications, and 
 So, let's start with a basic Broadway application, and load up a plugin that we'll define below.
 
 ```javascript
-var app = require('broadway').createApp();
+var broadway = require('broadway'),
+	app = new broadway.App();
 
 app.use(require('myposse'));
 
