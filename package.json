@@ -2,6 +2,9 @@
 	"name": "selfcontained_blog",
 	"author": "Brad Harris <bmharris@gmail.com>",
 	"description": "selfcontained blog - powered by flipflop",
+	"scripts": {
+		"start": "./node_modules/.bin/flipflop start"
+	},
 	"version" : "0.0.1",
 	"dependencies" : {
 		"flipflop" : "*"
