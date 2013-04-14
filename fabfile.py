@@ -2,7 +2,7 @@ from __future__ import with_statement
 import re
 from fabric.api import run, cd, env
 
-env.hosts = ['selfcontained.us']
+env.hosts = ['bmharris@selfcontained.us']
 
 def publish():
 	with cd('/data/www/selfcontained'):
