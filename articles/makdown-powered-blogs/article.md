@@ -22,7 +22,7 @@ I wanna be in control of the urls for articles, use the templating engine I pref
 [howtonode]: http://howtonode.org/
 [blacksmith]: https://github.com/flatiron/blacksmith
 [nodejitsu]: http://nodejitsu.com/
-[blog repo]: https://github.com/bmharris/selfcontained_blog
+[blog repo]: https://github.com/selfcontained/selfcontained_blog
 [dropbox publish]: http://joehewitt.com/2011/10/03/dropbox-is-my-publish-button
 [hewitt]: https://github.com/joehewitt
 [Dropbox]: http://dropbox.com

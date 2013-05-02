@@ -29,4 +29,4 @@ A few key features of Slikcalc:
 +	Slikcalc provides a simple interface for chaining multiple calculators so one can fire another, and so on.
 
 [image]: /images/slikcalc-logo.gif
-[slikcalc]: https://github.com/bmharris/slikcalc/
+[slikcalc]: https://github.com/selfcontained/slikcalc/

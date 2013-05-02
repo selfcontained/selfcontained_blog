@@ -51,5 +51,5 @@ def newVersion(version):
 ```
 
 [Fabric]: http://fabfile.org
-[blog.git]: http://github.com/bmharris/selfcontained_blog
-[FlipFlop]: http://github.com/bmharris/flipflop
+[blog.git]: http://github.com/selfcontained/selfcontained_blog
+[FlipFlop]: http://github.com/selfcontained/flipflop

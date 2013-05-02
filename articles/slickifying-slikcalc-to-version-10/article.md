@@ -4,7 +4,7 @@ A new version of [slikcalc][] was released.  This release simplified some code, 
 
 [![][image]](http://slikcalc.selfcontained.us)
 
-[slikcalc]: https://github.com/bmharris/slikcalc/
+[slikcalc]: https://github.com/selfcontained/slikcalc/
 [slikcalc-post]: /2008/04/22/format-currency-in-javascript-simplified/
-[download]: https://github.com/bmharris/slikcalc/tags
+[download]: https://github.com/selfcontained/slikcalc/tags
 [image]: /images/slikcalc.jpg
