@@ -5,7 +5,7 @@
 	"scripts": {
 		"start": "./node_modules/.bin/flipflop start"
 	},
-	"version" : "0.0.1",
+	"version" : "0.0.2",
 	"dependencies" : {
 		"flipflop" : "*"
 	},
