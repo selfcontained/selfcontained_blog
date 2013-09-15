@@ -14,5 +14,13 @@
 		}
 	},
 	"articles": "articles",
-	"domain": "http://selfcontained.us"
+	"domain": "http://selfcontained.us",
+	"routes": {
+		"archive": "/archive",
+		"article": "/:year/:month/:day/:slug",
+		"error": "/404.html",
+		"homepage": "/",
+		"feed": "/feed/rss.xml",
+		"tag": "/tag/:tag"
+	}
 }

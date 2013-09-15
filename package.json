@@ -7,7 +7,7 @@
 	},
 	"version" : "0.0.3",
 	"dependencies" : {
-		"flipflop" : "*"
+		"flipflop" : "0.1.0"
 	},
 	"engine": {
 		"node": ">=0.6"
