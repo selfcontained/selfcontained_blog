@@ -1,0 +1,1448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel><title>selfcontained</title><link href="http://selfcontained.us"/><author><name>Brad Harris</name></author><item><title>flipflop 0.1.0 - configurable urls</title><link href="http://selfcontained.us/2013/09/14/flipflop-0.1.0-configurable-urls"/><pubDate>Sat Sep 14 2013 16:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I released a new version of <a href="http://github.com/selfcontained/flipflop">flipflop</a> that has support for configurable urls.  Details are in the <a href="http://github.com/selfcontained/flipflop/blob/master/README.md#configuring-routes--urls">readme file</a>, but in short, when you generate a new flipflop blog, part of the config in the <code>blog.json</code> file will now include a section for <code>routes</code>.  If you have an existing flipflop blog and want to update to the latest, you can add this section to your <code>blog.json</code> config file.  You may also want/need to update a few of your templates, depending on how much you&#39;ve changed them.  Check <a href="http://github.com/selfcontained/selfcontained_blog/commit/6b15e6e5f0b2981a8d3868f5862809dadaf32ebf">this commit</a> to see an example of what changes to make.
+
+</p>
+<pre><code class="lang-javascript">&quot;routes&quot;: {
+    &quot;archive&quot;: &quot;/archive&quot;,
+    &quot;article&quot;: &quot;/:year/:month/:day/:slug&quot;,
+    &quot;error&quot;: &quot;/404.html&quot;,
+    &quot;homepage&quot;: &quot;/&quot;,
+    &quot;feed&quot;: &quot;/feed/rss.xml&quot;,
+    &quot;tag&quot;: &quot;/tag/:tag&quot;
+}</code></pre>
+<p>This will allow for customizing the url, such as adding a prefix to your blog:
+
+</p>
+<pre><code class="lang-javascript">&quot;routes&quot;: {
+    &quot;archive&quot;: &quot;/blog/archive&quot;,
+    &quot;article&quot;: &quot;/blog/:year/:month/:day/:slug&quot;,
+    &quot;error&quot;: &quot;/blog/404.html&quot;,
+    &quot;homepage&quot;: &quot;/blog&quot;,
+    &quot;feed&quot;: &quot;/blog/feed/rss.xml&quot;,
+    &quot;tag&quot;: &quot;/blog/tag/:tag&quot;
+}</code></pre>
+<p>There are a few special things to note with routes:
+
+</p>
+<ul>
+<li>The <strong>article</strong> route requires a <code>:slug</code> param.  Available params are:<ul>
+<li><code>:year</code></li>
+<li><code>:month</code></li>
+<li><code>:day</code></li>
+<li><code>:slug</code> (required)</li>
+</ul>
+</li>
+<li>The <strong>tag</strong> route requires a <code>:tag</code> param.  Available params are:<ul>
+<li><code>:tag</code> (required)</li>
+</ul>
+</li>
+</ul>
+
+]]></description></item><item><title>using express with broadway</title><link href="http://selfcontained.us/2012/09/20/using-express-with-broadway"/><pubDate>Thu Sep 20 2012 00:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p><a href="http://expressjs.com/">Express</a> is by no doubt an extremely popular http application server/framework for node.js.  In this article I&#39;d like to demonstrate how you can take advantage of <a href="https://github.com/flatiron/broadway">broadway</a> and <a href="http://expressjs.com/">express</a> together.
+
+</p>
+<p>In this approach, we&#39;ll treat the <em>http server</em> that <code>express</code> provides as just another plugin to our <code>broadway</code> application.
+
+</p>
+<h2>express http plugin</h2>
+<p>First we&#39;ll create an http plugin encapsulating express.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// http.js</span>
+
+<span class="keyword">var</span> express = <span class="keyword">require</span>(<span class="string">'express'</span>);
+
+<span class="keyword">var</span> HttpPlugin = exports;
+
+HttpPlugin.name = <span class="string">'http'</span>;
+
+HttpPlugin.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    <span class="keyword">var</span> server = app.http = express();
+    server.<span class="keyword">use</span>(server.router);
+
+    <span class="keyword">require</span>(<span class="string">'./routes'</span>)(app);
+};
+
+HttpPlugin.init = <span class="keyword">function</span>(done) {
+    done();
+};</code></pre>
+<p>I&#39;d also suggest defining your routes in their own module(s), and passing along the broadway application.  This will allow them to take full advantage of any other functionality your application acquires through other plugins.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// routes.js</span>
+module.exports = <span class="keyword">function</span>(app) {
+
+    app.http.get(<span class="string">'/'</span>, <span class="keyword">function</span>(req, res){
+        res.send(<span class="string">'express on broadway'</span>);
+    });
+
+};</code></pre>
+<h2>broadway.concat(express)</h2>
+<p>Next we&#39;ll create a broadway application and toss in our http plugin.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// app.js</span>
+
+<span class="keyword">var</span> broadway = <span class="keyword">require</span>(<span class="string">'broadway'</span>),
+    app = <span class="keyword">new</span> broadway.App();
+
+app.<span class="keyword">use</span>(<span class="keyword">require</span>(<span class="string">'./http'</span>));
+
+app.init(<span class="keyword">function</span>(err) {
+    app.http.listen(<span class="number">8080</span>);
+});</code></pre>
+<p>You can also just <code>module.exports = app.http</code> if you&#39;re using something like <code>up</code> and need to export an http server from your main applicaiton.
+
+</p>
+<h2>krakens.release()</h2>
+<p>Finally, fire up your application
+
+</p>
+<pre><code>&gt;node app.js</code></pre>
+<p>That&#39;s all there is to it.  In this example, the http server is just one piece of our application, and we can bolt on additional functionality as needed through more plugins.
+
+
+</p>
+
+]]></description></item><item><title>decoupling your node.js application with broadway</title><link href="http://selfcontained.us/2012/09/18/decoupling-your-node-js-application-with-broadway"/><pubDate>Tue Sep 18 2012 00:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<h2>the why</h2>
+<p>Why should you worry about decoupling your node.js application?  Can&#39;t you just use the module pattern and <code>require()</code> away?  Sure, sort of...until your application starts to grow, and module&#39;s begin to have cross dependencies.  In reality, you can avoid cross dependencies between modules for most small to medium sized applications, but as your application grows, you may run into <a href="/2012/05/08/node-js-circular-dependencies/">cyclic</a> <a href="http://nodejs.org/api/modules.html#modules_cycles">dependencies</a>, which can be hard to decipher and debug.  Without going into detail on what those are (follow those links if you&#39;re wondering), I present, a contrived example.
+
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> ModuleA = <span class="keyword">require</span>(<span class="string">'module-a'</span>),
+    ModuleB = <span class="keyword">require</span>(<span class="string">'module-b'</span>);
+
+<span class="keyword">var</span> ModuleC = module.exports = <span class="keyword">function</span>() {
+    <span class="keyword">this</span>.myB = <span class="keyword">new</span> ModuleB();
+};
+
+ModuleC.prototype = {
+
+    <span class="comment">/** amazin' function! */</span>
+    amazinFunction : <span class="keyword">function</span>() {
+        <span class="keyword">if</span>(ModuleA.isAmazin(<span class="keyword">this</span>.myB) {
+            <span class="keyword">this</span>.beginAwesomness();
+        }<span class="keyword">else</span> {
+            <span class="keyword">this</span>.sadPanda();
+        }
+    },
+
+    beginAwesomness : <span class="keyword">function</span>() { <span class="comment">/** awesome stuff */</span> },
+
+    sadPanda : <span class="keyword">function</span>() { <span class="comment">/** sad stuff */</span> }
+
+};</code></pre>
+<p>Here <code>ModuleC</code> is exported, and is a pretty basic function/prototype that has some required dependencies.  The principle of dependency injection would tell us that instead of ModuleC being responsible for loading ModuleA and ModuleB, those should be injected into it somehow.  <a href="http://github.com/flatiron/broadway">Broadway</a> is a fantastic library to help with this.
+
+</p>
+<h2>broadway</h2>
+<p>At it&#39;s core, <a href="http://github.com/flatiron/broadway">Broadway</a> provides a plugin architecture for applications, and a consistent way to manage and add functionality.  It also gives us a nice platform for dependency injection, and inversion of control, letting the modules alter and build on the application instead of the application being responsible to build everything and pull in your modules&#39; functionality.  If you&#39;re interested in this concept, <a href="http://blog.nodejitsu.com/ioc-and-dependency-injection-with-broadway">this article</a> from the Nodejitsu blog is super informative.
+
+</p>
+<p>So, let&#39;s start with a basic Broadway application, and load up a plugin that we&#39;ll define below.
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> broadway = <span class="keyword">require</span>(<span class="string">'broadway'</span>),
+    app = <span class="keyword">new</span> broadway.App();
+
+app.<span class="keyword">use</span>(<span class="keyword">require</span>(<span class="string">'myposse'</span>));
+
+app.init(<span class="keyword">function</span>(err) {
+    <span class="comment">// we're all setup, gtg</span>
+});</code></pre>
+<p>A basic Broadway plugin might look something like...
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// myposse.js</span>
+
+<span class="keyword">var</span> MyPosse = exports;
+
+MyPosse.name = <span class="string">'myposse'</span>;
+
+MyPosse.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    <span class="comment">// here we can add some functionality to the app</span>
+    app.posse = <span class="keyword">function</span>() {
+        console.log(<span class="string">"my posse's on broadway"</span>);
+    };
+};
+
+MyPosse.init = <span class="keyword">function</span>(done) {
+    <span class="comment">// handle any asynchronous initilization</span>
+    done();
+};</code></pre>
+<p>RIP MCA.  Inside our <code>attach</code> function is where we can pull in our related modules, and expose them to the application.  Notice how we&#39;re calling the result of the require statement of each module, passing in the Broadway application, and setting that onto the application itself.
+
+</p>
+<pre><code class="lang-javascript">MyPosse.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    app.ModuleA = <span class="keyword">require</span>(<span class="string">'module-a'</span>)(app);
+    app.ModuleB = <span class="keyword">require</span>(<span class="string">'module-b'</span>)(app);
+    app.ModuleC = <span class="keyword">require</span>(<span class="string">'module-c'</span>)(app);
+
+};</code></pre>
+<p>We would want to rework our above example of ModuleC to allow for this change, which also lets us remove the require statements for ModuleA and ModuleB, and pull them in as dependencies from the <code>app</code> object.
+
+</p>
+<pre><code class="lang-javascript">module.exports = <span class="keyword">function</span>(app) {
+
+    <span class="keyword">var</span> ModuleA = app.ModuleA,
+        ModuleB = app.ModuleB;
+
+    <span class="keyword">var</span> ModuleC = <span class="keyword">function</span>() {
+        <span class="keyword">this</span>.myB = <span class="keyword">new</span> ModuleB();
+    };
+
+    ModuleC.prototype = {
+
+        <span class="comment">/** amazin' function! */</span>
+        amazinFunction : <span class="keyword">function</span>() {
+            <span class="keyword">if</span>(ModuleA.isAmazin(<span class="keyword">this</span>.myB) {
+                <span class="keyword">this</span>.beginAwesomness();
+            }<span class="keyword">else</span> {
+                <span class="keyword">this</span>.sadPanda();
+            }
+        },
+
+        beginAwesomness : <span class="keyword">function</span>() { <span class="comment">/** awesome stuff */</span> },
+
+        sadPanda : <span class="keyword">function</span>() { <span class="comment">/** sad stuff */</span> }
+
+    };
+
+    <span class="keyword">return</span> ModuleC;
+
+};</code></pre>
+<p>With Broadway you can organize your application&#39;s modules and expose their functionality to the application via plugins.  I&#39;ve found it a great way to organize services, models, and other application resources, and expose them to the application without coupling them directly to eachother via <code>require</code> statements.  There&#39;s definitely a place for modules that are independant enough to be <code>require()&#39;d</code> at will, but I&#39;ve also found that there&#39;s a place for application specific modules that are best managed at an application level.
+
+</p>
+<p>There&#39;s a lot more <a href="http://github.com/flatiron/broadway">Broadway</a> has to offer (such as application events), so check it out if you&#39;re building large applications on node.js.
+
+
+</p>
+
+]]></description></item><item><title>hello fabric</title><link href="http://selfcontained.us/2012/09/01/hello-fabric"/><pubDate>Sat Sep 01 2012 00:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>In an effort to teach myself a little about <a href="http://fabfile.org">Fabric</a>, I threw together a script to help publish updates for this blog.  It&#39;s stored on <a href="http://github.com/selfcontained/selfcontained_blog">Github</a> and is an auto-generated static site created by <a href="http://github.com/selfcontained/flipflop">FlipFlop</a>.
+
+</p>
+<pre><code class="lang-python">from __future__ import with_statement
+import re
+from fabric.api import run, cd, env
+
+env.hosts = [<span class="string">'selfcontained.us'</span>]
+
+def publish():
+    with cd(<span class="string">'/data/www/selfcontained'</span>):
+        run(<span class="string">'git pull'</span>)
+        run(<span class="string">'flipflop generate'</span>)
+    <span class="keyword">print</span>(<span class="string">'changes published'</span>)</code></pre>
+<p>So simple, just a <code>fab publish</code> and changes are out there.  Sure beats ssh&#39;ing around and doing it manually.  I realize this is a super basic useage of fabric, but I&#39;m a fan.
+
+</p>
+<p>Here&#39;s a few more commands I put together for tagging and deploying tags to a server:
+
+</p>
+<pre><code class="lang-python">def tag(version=None):
+    <span class="keyword">if</span> version is None:
+        version = getNextVersion()
+    <span class="keyword">if</span>(confirm(<span class="string">'create new tag (%s)?'</span> % version) is <span class="keyword">False</span>):
+        abort(<span class="string">'no tag for u'</span>)
+    local(<span class="string">'git tag -a %s -m "%s"'</span> % (version, version))
+    local(<span class="string">'git push --tags'</span>);
+    <span class="keyword">print</span>(<span class="string">'tag %s created'</span> % version)
+
+def deploy(version=None):
+    <span class="keyword">if</span> version is None:
+        version = getNextVersion()
+    <span class="keyword">if</span> newVersion(version):
+        tag(version)
+    <span class="keyword">if</span>(confirm(<span class="string">'Deploy tag "%s" to production?'</span> % version) is <span class="keyword">False</span>):
+        abort(<span class="string">'no deploy for u'</span>)
+    with cd(<span class="string">'/path/to/repo'</span>):
+        run(<span class="string">'git fetch'</span>)
+        run(<span class="string">'git co %s'</span> % version)
+        sudo(<span class="string">'/etc/init.d/apache2 restart'</span>)
+    <span class="keyword">print</span>(<span class="string">'tag %s deployed'</span> % version)
+
+def getNextVersion():
+    latest = local(<span class="string">'git tag | sort -V | tail -1'</span>).strip().split(<span class="string">'.'</span>)
+    latest.append(str(int(latest.pop())+<span class="number">1</span>))
+    <span class="keyword">return</span> <span class="string">'.'</span>.join(latest)
+
+def newVersion(version):
+    <span class="keyword">return</span> version not in local(<span class="string">'git tag'</span>).strip().split(<span class="string">'\n'</span>)</code></pre>
+
+]]></description></item><item><title>node.js and circular dependencies</title><link href="http://selfcontained.us/2012/05/08/node-js-circular-dependencies"/><pubDate>Tue May 08 2012 00:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>Circular Dependencies in modules can be tricky, and hard to debug in <a href="http://nodejs.org">node.js</a>.  If module <code>A</code> <code>requires(&#39;B&#39;)</code> before it has finished setting up it&#39;s exports, and then module <code>B</code> <code>requires(&#39;A&#39;)</code>, it will get back an empty object instead what <code>A</code> may have intended to export.  It makes logical sense that if the export of <code>A</code> wasn&#39;t setup, requiring it in <code>B</code> results in an empty export object.  All the same, it can be a pain to debug, and not inherently obvious to developers used to having those circular dependencies handled automatically.  Fortunately, there are rather simple approaches to resolving the issue.
+
+</p>
+<h2>example.broken() === true</h2>
+<p>Let&#39;s define a broken scenario to clearly illustrate the issue.  Module <code>A</code> delegates to an instance of Module <code>B</code> to <code>do some important stuff()</code>.
+
+</p>
+<h3>Module A</h3>
+<pre><code class="lang-javascript"><span class="keyword">var</span> B = <span class="keyword">require</span>(<span class="string">'./B'</span>),
+    id,
+    bInstance;
+
+<span class="keyword">var</span> A = module.exports = {
+    init : <span class="keyword">function</span>(val) {
+        id = val;
+        bInstance = <span class="keyword">new</span> B();
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },
+
+    doStuff : <span class="keyword">function</span>() {
+        bInstance.stuff();
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },
+
+    getId : <span class="keyword">function</span>() {
+        <span class="keyword">return</span> id;
+    }
+};</code></pre>
+<h3>Module B</h3>
+<pre><code class="lang-javascript"><span class="keyword">var</span> A = <span class="keyword">require</span>(<span class="string">'./A'</span>);
+
+<span class="keyword">var</span> B = module.exports = <span class="keyword">function</span>(){
+    <span class="keyword">return</span> {
+        stuff : <span class="keyword">function</span>() {
+            console.log(<span class="string">'I got the id: '</span>, A.getId());
+        }
+    };
+};</code></pre>
+<h3>Tie them together</h3>
+<pre><code class="lang-javascript"><span class="keyword">require</span>(<span class="string">'./A.js'</span>)
+    .init(<span class="number">1234</span>)
+    .doStuff();</code></pre>
+<p>With this you&#39;ll end up with an error:
+</p>
+<pre><code class="lang-javascript">TypeError: Object <span class="comment">#&lt;Object> has no method 'getId'</span>
+    at Object.stuff (/Users/bharris/workspace/circular-dep/B.js:<span class="number">7</span>:<span class="number">36</span>)
+    at Object.doStuff (/Users/bharris/workspace/circular-dep/A.js:<span class="number">18</span>:<span class="number">13</span>)
+    at Object.&lt;anonymous> (/Users/bharris/workspace/circular-dep/test.js:<span class="number">4</span>:<span class="number">3</span>)</code></pre>
+<p>The issue is that when <code>A</code> is required at the top of <code>B</code>, it ends up being an empty object, which doesn&#39;t have a <code>getId</code> method.
+
+</p>
+<h2>example.solutions().length === 2</h2>
+<p>I&#39;ll explain two simple solutions to this issue:
+
+</p>
+<ul>
+<li><a href="#delay">delay invocation of dependency until runtime</a></li>
+<li><a href="#inject">replace circular dependency with dependency injection</a></li>
+</ul>
+<p><a name="delay"></a>
+</p>
+<h2>delay invocation of dependency until runtime</h2>
+<p>If we move the require statements to where they are needed at runtime, it will delay the execution of them, allowing for the exports to have been created properly.  In this example, we can get away with simply moving the <code>require(&#39;./B&#39;)</code> statement.
+
+</p>
+<h3>Module A</h3>
+<pre><code class="lang-javascript"><span class="keyword">var</span> id,
+    bInstance;
+
+<span class="keyword">var</span> A = module.exports = {
+    init : <span class="keyword">function</span>(val) {
+        id = val;
+        bInstance = <span class="keyword">new</span> <span class="keyword">require</span>(<span class="string">'./B'</span>)();
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },
+
+    doStuff : <span class="keyword">function</span>() {
+        bInstance.stuff();
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },
+
+    getId : <span class="keyword">function</span>() {
+        <span class="keyword">return</span> id;
+    }
+};</code></pre>
+<p>This feels like a bit of bandaid to this particular problem, but perhaps is the right solution in some cases.
+
+</p>
+<p><a name="inject"></a>
+</p>
+<h2>replace circular dependency with dependency injection</h2>
+<p>The only dependecy that <code>B</code> currently has on <code>A</code> is an id property it needs access to.  We could just pass the id into the constructor of <code>B</code>, but let&#39;s assume <code>A</code> is more significant to the operations <code>B</code> must perform, and a proper reference is required.  If we inject that dependency we&#39;ll allow for a loose coupling between the two modules, and have a slightly more elegant solution.  Zing!
+
+</p>
+<h3>Module A</h3>
+<pre><code class="lang-javascript"><span class="keyword">var</span> B = <span class="keyword">require</span>(<span class="string">'./B'</span>),
+    id,
+    bInstance;
+
+<span class="keyword">var</span> A = module.exports = {
+    init : <span class="keyword">function</span>(val) {
+        id = val;
+        bInstance = <span class="keyword">new</span> B(<span class="keyword">this</span>);
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    },
+
+    getId : <span class="keyword">function</span>() {
+        <span class="keyword">return</span> id;
+    },
+
+    doStuff : <span class="keyword">function</span>() {
+        bInstance.stuff();
+        <span class="keyword">return</span> <span class="keyword">this</span>;
+    }
+};</code></pre>
+<h3>Module B</h3>
+<pre><code class="lang-javascript"><span class="keyword">var</span> B = module.exports = <span class="keyword">function</span>(val){
+    <span class="keyword">var</span> dependency = val;
+    <span class="keyword">return</span> {
+        stuff : <span class="keyword">function</span>() {
+            console.log(<span class="string">'I got the id: '</span>, dependency.getId());
+        }
+    };
+
+};</code></pre>
+<h3>#winning</h3>
+<pre><code class="lang-javascript">DependencyInjection
+    .merge(LooseCoupling)
+    .attach($);</code></pre>
+<p>I put my <code>$</code> on <a href="http://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> and <a href="http://en.wikipedia.org/wiki/Loose_coupling">loose coupling</a>.
+
+</p>
+
+]]></description></item><item><title>google.drive.backup(iphoto.library)</title><link href="http://selfcontained.us/2012/04/27/backup-iphoto-with-google-drive"/><pubDate>Fri Apr 27 2012 18:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p><a href="http://www.apple.com/macosx/apps/#timemachine">Time Machine</a> is great, but certain things, like the past 10 years of photos of my kids crawling around in diapers, learning to swim, snowboarding, and shoving their faces full of cake, warrant more than just one extra local backup in my mind.  There are lots of cloud storage solutions, but none have been cheep enough for me to really consider using, until <a href="http://drive.google.com">Google Drive</a> came out.  <em>$4.99 a month for 100 GB</em>, <strong>yes please!</strong>
+
+</p>
+<h2>iphoto.library.clone() === ftw()</h2>
+<p>After installing <a href="http://drive.google.com">Google Drive</a> and grabbing a cheap 100 GB subscription, I set forth to backup my precious photos.  iPhoto stores it&#39;s library in an <em>app</em> file, which is really just a folder.  You can put that folder anywhere (it&#39;s in <code>~\Pictures\iPhoto Library</code> by default), so I <em>could</em> just move it into my <code>~\Google Drive</code> folder and call it good.  I don&#39;t have that much confidence in Google Drive yet, and would hate myself if I lost all those photos.  Since local hard-drive space is so cheap and plentiful, I decided to copy my <code>~\Pictures\iPhoto Library</code> folder into my <code>~\Google Drive</code> folder.  Once that was done, I just needed to keep it synched with my real iPhoto Library folder.
+
+</p>
+<h2>rescue.add(crontab).add(rsync);</h2>
+<p>OSX Lion uses <em>launchd</em> instead of <em>cron</em>, but I&#39;m used to cron, and it&#39;s still installed w/ Lion, so I&#39;m gonna use it.  Setting up an hourly <a href="http://en.wikipedia.org/wiki/Cron">cron</a> to <a href="http://en.wikipedia.org/wiki/Rsync">rsync</a> any changes to the local Google Drive copy of the iPhoto Library does the trick, and is super simple.  Create a text file, somewhere, like maybe <code>~\crontab.txt</code> and fill it with this lovely bit of text, adjusting any directories as needed:
+
+</p>
+<pre><code>1 * * * * rsync -lrtuv ~/Pictures/iPhoto\ Library/ ~/Google\ Drive/iPhoto\ Library/</code></pre>
+<p>On the first minute of every hour, this job will run.  Feel free to adjust as you need, but rsync is fast, and only copies changes, so don&#39;t worry too much about running it too often.  The <code>-l</code> is important, as iPhoto contains a few internal symlinks that are needed for it to function correctly.  If you feel like giving it a test run, just run the following in a terminal:
+
+</p>
+<pre><code>rsync -lrtuv ~/Pictures/iPhoto\ Library/ ~/Google\ Drive/iPhoto\ Library/</code></pre>
+<p>With that setup, we just need to add our crontab file to the system:
+
+</p>
+<pre><code>crontab ~/crontab.txt</code></pre>
+<p>Then check to make sure your job is setup:
+
+</p>
+<pre><code>crontab -l</code></pre>
+<p>That&#39;s it, now <a href="http://drive.google.com">Google Drive</a> will backup your iPhoto Library, and any updates to the library will be synched locally with the Google Drive copy.  If you get courageous, you can tell iPhoto to load the library in your Google Drive folder as the source by double clicking <code>~\Google Drive\iPhoto Library</code>.  If you do that, be sure to turn off your cron job though!
+
+</p>
+<pre><code>crontab -r</code></pre>
+<p>Now you can happily <code>camera.takePicture(kids.eat(cake))</code> and know it&#39;s backed up somewhere other than just your home.
+
+</p>
+
+]]></description></item><item><title>markdown powered blogs</title><link href="http://selfcontained.us/2012/04/14/makdown-powered-blogs"/><pubDate>Sat Apr 14 2012 12:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>Switching from a complex blogging platform to a lightweight, file-based blog is something of a trend amongst web developers lately.  I chalk it up to our love of simple solutions, and a preference of interfacing directly with a file-system.  I much prefer to open up <a href="http://www.sublimetext.com/2">SublimeText2</a>, go into <a href="http://www.sublimetext.com/docs/2/distraction_free.html">distraction free</a> mode and create a <a href="http://daringfireball.net/projects/markdown/syntax">markdown</a> file for a new article.  For me it&#39;s a smaller barrier of entry to writing than logging into Worpress and gathering my thoughts in a <code>&lt;textarea&gt;</code>.
+
+</p>
+<h2>what&#39;s out there</h2>
+<p><a href="https://github.com/mojombo/jekyll">There</a> <a href="https://github.com/creationix/wheat">are</a> <a href="https://github.com/flatiron/blacksmith">some</a> great options out there for markdown based blogs.  My preference is towards <a href="http://nodejs.org">node.js</a>, and <a href="https://github.com/creationix/wheat">Wheat</a> (created by <a href="https://github.com/creationix">Tim Caswell</a>) as a platform for <a href="http://howtonode.org/">howtonode.org</a> is one of the more popular solutions in that category.  <a href="https://github.com/flatiron/blacksmith">Blacksmith</a> is another great solution, created by <a href="http://nodejitsu.com/">nodejitsu</a>.  Both are interesting and powerful solutions, but weren&#39;t exactly what I wanted.
+
+</p>
+<h2>javascript is easy</h2>
+<p>I wanna be in control of the urls for articles, use the templating engine I prefer, and have some fun writing javascript.  I also want to be able to start my blog up locally on a node http server to tweak it and test it, and not have to generate the static site to view every change.  For the live site, I want to just <a href="https://github.com/selfcontained/selfcontained_blog">clone a git repo</a> on a server, and run <code>&gt; node generate.js</code> to create a static site for Apache to serve.  <a href="https://github.com/selfcontained/selfcontained_blog">So I did</a>, it was fun.  Feel free to check it out, maybe <a href="https://github.com/selfcontained/selfcontained_blog">fork</a> it and see what you think.
+
+</p>
+<h2>i can haz dropbox blog?</h2>
+<p><a href="http://joehewitt.com/2011/10/03/dropbox-is-my-publish-button">Check out</a> what <a href="https://github.com/joehewitt">Joe Hewitt</a> is doing to integrate <a href="http://dropbox.com">Dropbox</a> into his blogging solution.  I dig it.
+
+</p>
+
+]]></description></item><item><title>node.js clusters</title><link href="http://selfcontained.us/2012/04/04/node-js-clusters"/><pubDate>Wed Apr 04 2012 16:59:34 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>When it comes time to deploy a <a href="http://nodejs.org">node.js</a> application, you&#39;ll want to examine how you can benefit from your hardware and take advantage of multiple cpus.  Node is single threaded, so having one process run your application on a server with more than one cpu isn&#39;t optimal.  Fortunately, like many things on node, it&#39;s simple to do so.
+
+</p>
+<p>Let&#39;s take the following example of a dead simple http server:
+
+</p>
+<pre><code class="lang-javascript">    <span class="keyword">require</span>(<span class="string">'http'</span>).createServer(<span class="keyword">function</span>(req, res) {
+        res.writeHead(<span class="number">200</span>);
+        res.end(<span class="string">'this is dead simple'</span>);
+    }).listen(<span class="number">3001</span>);</code></pre>
+<p>You&#39;ve got that saved in a file, let&#39;s call it <em>app.js</em>.  You start it up...
+
+</p>
+<pre><code>    &gt; node app.js</code></pre>
+<p>...and it&#39;s amazing, it writes out text to all those that visit your site, just like you want.  It&#39;s become an overnight internet sensation, and now you want to know what crazy hoops you&#39;ll have to jump through to scale it up and take advantage of all the cpus on your server.  Enter the <a href="http://nodejs.org/docs/latest/api/cluster.html">cluster</a> module.
+
+</p>
+<p>We&#39;ll create a new file that we&#39;ll use in production to launch our application.  Let&#39;s call it <code>cluster.js</code>.
+
+</p>
+<pre><code class="lang-javascript">    <span class="keyword">var</span> cluster = <span class="keyword">require</span>(<span class="string">'cluster'</span>);
+
+    <span class="keyword">if</span> (cluster.isMaster) {
+        <span class="comment">//start up workers for each cpu</span>
+        <span class="keyword">require</span>(<span class="string">'os'</span>).cpus().<span class="keyword">forEach</span>(<span class="keyword">function</span>() {
+            cluster.fork();
+        });
+
+    } <span class="keyword">else</span> {
+        <span class="comment">//load up your application as a worker</span>
+        <span class="keyword">require</span>(<span class="string">'./app.js'</span>);
+    }</code></pre>
+<p>When you start your app now...
+
+</p>
+<pre><code>    &gt; node cluster.js</code></pre>
+<p>...node will recognize that the cluster is the master, and then you simply fork the cluster for each cpu you have.  Those in turn will start up, and those workers won&#39;t be the master, so they&#39;ll just load up your <code>app.js</code> and start up a process for each cpu.
+
+</p>
+<p>But wait, doesn&#39;t each worker have to listen on a different port?
+
+</p>
+<blockquote>
+<p>   &quot;The cluster module allows you to easily create a network of processes that all share server ports.&quot;
+
+</p>
+</blockquote>
+<p>One TCP server is shared between all workers, so they can all be listening on the same port.
+
+</p>
+<p>Awesome, you&#39;re now handling loads of traffic, but after a day you realize two of your workers died because you had an exception being thrown in that complex codebase of yours.  How can you make sure you keep them running?
+
+</p>
+<pre><code class="lang-javascript">    <span class="keyword">if</span>(cluster.isMaster) {
+        <span class="comment">//start up workers for each cpu</span>
+        <span class="keyword">require</span>(<span class="string">'os'</span>).cpus().<span class="keyword">forEach</span>(<span class="keyword">function</span>() {
+            cluster.fork();
+        });
+
+        cluster.on(<span class="string">'death'</span>, <span class="keyword">function</span>(worker) {
+            console.log(<span class="string">'worker '</span> + worker.pid + <span class="string">' died'</span>);
+            cluster.fork();
+        });
+    }</code></pre>
+<p>Listen for the &#39;death&#39; event on the cluster, and just fork a new worker if one dies.  Simple huh?  Keep in mind, every worker is it&#39;s own process, therefor they don&#39;t share memory.
+
+</p>
+
+]]></description></item><item><title>markdown.me</title><link href="http://selfcontained.us/2011/07/08/markdown-me"/><pubDate>Fri Jul 08 2011 19:47:04 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p><a href="http://daringfireball.net/projects/markdown/">Markdown</a> is a great shorthand syntax for creating HTML, and subsequently, for taking notes.  I often take notes for different situations and use the Markdown syntax to help give them structure and organization.  One thing I found I often wanted was a way to enter that Markdown somewhere, and have it generate an HTML page from it, with a permalink so I could share it or access it later.  The <a href="http://daringfireball.net/projects/markdown/dingus">Markdown dingus</a> provides a great UI for testing out HTML conversion, but doesn&#39;t provide any persistence, so I threw together a pretty quick site that fit my needs.
+
+</p>
+<p><a href="http://markdown.me">markdown.me</a>
+
+</p>
+<p>It&#39;s pretty basic, but you can throw in your Markdown and you end up with a unique url you can share with the generated HTML.  I was too lazy to add a full-blown account registration layer to organize and manage your documents, but did add Facebook login so you can do that if desired.  Perhaps I&#39;ll add other forms of login if anyone else ends up using it.  Anything you put on there is public as well, for now. Here&#39;s the <a href="http://markdown.me/4dfcfc5ec4fee0367a000000">permalink to some notes</a> I took at this year&#39;s Velocity Conference.
+
+</p>
+
+]]></description></item><item><title>PHPUnit, Mocks and Closures</title><link href="http://selfcontained.us/2011/05/28/phpunit-mocks-and-closures"/><pubDate>Sat May 28 2011 17:41:09 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I like <a href="http://www.phpunit.de/manual/3.6/en/index.html">PHPUnit</a>, and I like <a href="http://us3.php.net/manual/en/functions.anonymous.php">closures</a>, but haven&#39;t found many useful cases for them (closures) in PHP yet.  Just recently I came across a situation where I needed a closure when working with PHPUnit Mock objects.  For those not familiar with Mock Objects in regards to testing, <a href="http://www.phpunit.de/manual/3.6/en/test-doubles.html#test-doubles.mock-objects">here&#39;s a link</a>.  It&#39;s fairly common when creating a mock object for testing to specify what a function is expected to be called with, and what it will return in that case.  Below I&#39;m creating a mock &#39;User&#39; object that will return 18 for the age however many times it is called.
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> UserTest <span class="keyword">extends</span> PHPUnit_Framework_TestCase{
+
+    <span class="keyword">public</span> <span class="keyword">function</span> testGetAge() {
+        <span class="variable">$user</span> = <span class="variable">$this</span>->getMock(<span class="string">'User'</span>, <span class="keyword">array</span>(<span class="string">'getAge'</span>))
+            ->expects(<span class="variable">$this</span>->any())
+            ->method(<span class="string">'getAge'</span>)
+            ->will(<span class="variable">$this</span>->returnValue(<span class="number">18</span>));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->getAge(), <span class="number">18</span>);
+    }
+
+}</code></pre>
+<p>This is a pretty straight forward example of Mocks, but what happens when the value you want to return is dependent on the value it is called with, and there is some logic required to process this?  This is where closures come in handy.  Let&#39;s say you have a dynamic array you&#39;ve built up, and you want to return true if a particular function, <strong>hasValue</strong> is called with a value that exists in that array.  Here&#39;s how you can do it with <strong>Mocks</strong> and <strong>closures</strong>, using the <strong>returnCallback</strong> functionality of PHPUnit:
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> UserTest <span class="keyword">extends</span> PHPUnit_Framework_TestCase{
+
+    <span class="keyword">public</span> <span class="keyword">function</span> testInArray() {
+        <span class="variable">$values</span> = <span class="keyword">array</span>(<span class="number">1</span>,<span class="number">10</span>,<span class="number">78</span>,<span class="number">30</span>);
+        <span class="variable">$user</span> = <span class="variable">$this</span>->getMock(<span class="string">'User'</span>, <span class="keyword">array</span>(<span class="string">'hasValue'</span>))
+            ->expects(<span class="variable">$this</span>->any())
+            ->method(<span class="string">'hasValue'</span>)
+            ->with(<span class="variable">$this</span>->anything())
+            ->will(<span class="variable">$this</span>->returnCallback(<span class="keyword">function</span>(<span class="variable">$value</span>) <span class="keyword">use</span> (<span class="variable">$values</span>){
+                <span class="keyword">return</span> in_array(<span class="variable">$value</span>, <span class="variable">$values</span>);
+            }));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->hasValue(<span class="number">10</span>));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->hasValue(<span class="number">99</span>) == <span class="keyword">false</span>);
+    }
+
+}</code></pre>
+<p>When I call <strong>hasValue</strong>, passing in 10, we&#39;ll get true, and with 99 it&#39;s false.  This is checked at runtime when the closure is executed, checking against the <strong>$values</strong> array.  Also, stay away from <a href="http://canvasrider.com/tracks/featured">Canvas Rider</a>, it&#39;s dangerously addictive.
+
+</p>
+
+]]></description></item><item><title>PHP and an abstract Singleton</title><link href="http://selfcontained.us/2011/04/20/php-and-an-abstract-singleton"/><pubDate>Wed Apr 20 2011 18:00:55 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>PHP is quirky.  I&#39;ve heard it called other things, but I&#39;ll leave it at that.  I had a great learning experience while writing an abstract singleton class.  Static binding in PHP behaves uniquely, and is often a hurdle when you try and develop an kind of an API using inheritance and static properties.  If you aren&#39;t familiar with static binding in PHP, <a href="http://us3.php.net/lsb">read the doc on late static binding</a> and it will give you a good overview.  This issue came up while creating an abstract singleton class.
+
+</p>
+<p>Let me explain by example.  Here&#39;s my first pass at a simple abstract singleton class that I could theoretically extend from other classes, and just pick up &quot;singleton&quot; behavior.  Disclaimer!!! Don&#39;t use this class, it doesn&#39;t work!
+
+</p>
+<pre><code class="lang-php"><span class="keyword">abstract</span> <span class="keyword">class</span> Singleton {
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="variable">$instance</span> = <span class="keyword">null</span>;
+
+    <span class="keyword">final</span> <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">function</span> getInstance() {
+
+        <span class="keyword">if</span>(<span class="keyword">static</span>::<span class="variable">$instance</span> === <span class="keyword">null</span>) {
+            <span class="keyword">static</span>::<span class="variable">$instance</span> = <span class="keyword">new</span> <span class="keyword">static</span>();
+        }
+        <span class="keyword">return</span> <span class="keyword">static</span>::<span class="variable">$instance</span>;
+    }
+
+    <span class="keyword">protected</span> <span class="keyword">function</span> __construct() { }
+
+}</code></pre>
+<p>This worked, initially, until I created two classes that extended <code>Singleton</code> and found the second one I called behaved remarkably like the first one.
+
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> FirstSingleton <span class="keyword">extends</span> Singleton {
+...
+}
+<span class="keyword">class</span> SecondSingleton <span class="keyword">extends</span> Singleton {
+...
+}</code></pre>
+<p>Any calls to <code>SecondSingleton::getInstace()</code> were really just returning the <code>FirstSingleton</code> instance.  Since the <code>private static $instance</code> property is delcared on the abstract <code>Singleton</code> class, there was really just one <code>$instance</code> being stored across calls to <code>getInstance()</code> from various subclasses.  PHP doesn&#39;t bind the <code>$instance</code> property to the called class, it is bound to the class where it is declared, <code>Singleton</code> in this case.  You <em>could</em> declare the <code>$instance</code> property on all classes that extend <code>Singleton</code>, but that is defeating the point of the abstract class.  Here&#39;s round two, which does work, but I have mixed feelings about:
+
+</p>
+<pre><code class="lang-php"><span class="keyword">abstract</span> <span class="keyword">class</span> Singleton {
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="variable">$instances</span>;
+
+    <span class="keyword">final</span> <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">function</span> getInstance() {
+        <span class="variable">$className</span> = get_called_class();
+
+        <span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>]) == <span class="keyword">false</span>) {
+            <span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>] = <span class="keyword">new</span> <span class="keyword">static</span>();
+        }
+        <span class="keyword">return</span> <span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>];
+    }
+
+    <span class="keyword">protected</span> <span class="keyword">function</span>  __construct() { }
+
+}</code></pre>
+<p>The change here is that instead of storing a single <code>$instance</code> property on the abstract <code>Singleton</code> class, we&#39;re storing an array of instances, indexed by the class name of the called class.  It behaves as expected, but the code isn&#39;t as clear or clean as I would have hoped it would be.
+
+</p>
+
+]]></description></item><item><title>Review: Yahoo! User Interface Library 2.x Cookbook</title><link href="http://selfcontained.us/2011/04/20/review-yahoo-user-interface-library-2-x-cookbook"/><pubDate>Wed Apr 20 2011 12:12:15 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I&#39;ve had some time to really dig in to Matt Snider&#39;s latest book, Yahoo! User Interface Library 2.x Cookbook, and have some great things to say about it.  I wanted to take a different approach to reading and reviewing this book, and hopefully it proves helpful to readers.  I&#39;ve been working on <a href="whoopdwhoop.com">whoopdwhoop.com</a> in my free time a lot lately, and normally as I&#39;m developing front-end code using YUI, I reference their online documentation (which is pretty good IMO) when I have questions.  I decided to just rely on this book for the past few weeks to really see how useful it was as a reference while developing.  In short, it has been a great development companion.  Let me explain...
+
+</p>
+<p>I was working on adding some DataTable functionality for a client&#39;s site (<a href="https://aerissecure.com/">Aeris Secure</a>), and found the chapter in Matt&#39;s book to provide great examples and explanations for getting it going relatively quickly.  He lays out multiple use cases for the DataTable, as he does so with just about all of the chapters, and that wide coverage provided a great reference as I found each example had additional insight into how to use the particular component of the YUI library.  I think this approach will be a great way for beginners to ramp up to using the library, as they start fairly vanilla and basic, but as you progress the more advanced use cases and features are discussed.  For a developer that is more familiar with the basics, they will quickly learn to jump a few sections in to each chapter to get to the meat of what they want to learn.
+
+</p>
+<p>That&#39;s one example of how I found the book to be helpful in practice.  If you want a solid picture of how to work with YUI, this book is great.
+
+</p>
+
+]]></description></item><item><title>Awaiting Yahoo! User Interface Library 2.x Cookbook</title><link href="http://selfcontained.us/2011/02/28/awaiting-yahoo-user-interface-library-2-x-cookbook"/><pubDate>Mon Feb 28 2011 18:00:31 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p><img src="/images/yui-lib-2.x-cookboox.jpg" alt="book cover">
+
+</p>
+<p>It&#39;s been out for awhile now, but I&#39;ve got a copy of &quot;<a href="https://www.packtpub.com/yahoo-user-interface-library-2-x-cookbook/book">Yahoo! User Interface Library 2.x Cookbook</a>&quot; by <a href="http://mattsnider.com/">Matt Snider</a> on it&#39;s way. I&#39;m excited to give it a read, Matt definitely knows the YUI Library from his work on <a href="http://www.mint.com/">Mint</a>.
+
+</p>
+
+]]></description></item><item><title>Latest Endeavor: whoopdwhoop.com</title><link href="http://selfcontained.us/2011/01/23/latest-endeavor-whoopdwhoop-com"/><pubDate>Sun Jan 23 2011 21:53:16 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p><a href="http://whoopdwhoop.com"><img src="/images/whoopdwhoop.png" alt=""></a>
+
+</p>
+<p>My wife and I have been chugging away on a new endeavor for awhile, and we finally got to a point where we could launch it live.  In short, it&#39;s a currency free, creative marketplace, and it&#39;s called <a href="http://whoopdwhoop.com">whoopdwhoop.com</a>.  It gives &quot;artisans&quot;, or crafty people, a place to list their creations, and hopefully, a community where they can swap their creations with others all without exchanging any currency.  This is facilitated through a pretty simple &quot;whoop&quot; (read point) based system.  As people request a creation from someone, they pay them in &quot;whoops&quot;, and then that person can use those &quot;whoops&quot; to request other creations.  We haven&#39;t pushed much of a marketing campaign at it yet, in hopes to gauge initial feedback before doing so, and fix or improve whatever came up.  We&#39;ve done a fair amount of that so far, and are pretty happy with it&#39;s current state.  Needless to say, we can&#39;t speak to if it will catch on and be the start of a thriving community, we&#39;ll have to wait and see.
+
+</p>
+<p>While I don&#39;t think the majority of my blog&#39;s reader-base would be interested in using the site itself, I wanted to make a quick post to point out how the development of it has gone, which will hopefully be of more interest to those reading.
+
+</p>
+<p>I built the site in about 4 or 5 months of actual heads-down, after-hours work.  I have a day job, so this is just something I&#39;ve spent nights and weekends putting time into.  It&#39;s built on <a href="http://zendframework.com/">Zend Framework</a> MVC, which I absolutely love.  The UI is enhanced through YUI, which is another favorite library of mine.  The database is MySQL, and I&#39;m also using <a href="http://www.doctrine-project.org/">Doctrine ORM</a>.
+
+</p>
+<p>Zend Framework and Doctrine, in my mind, are a great marriage of libraries for PHP.  Zend handles everything I&#39;ve needed from an MVC, with the additional benefits of providing out-of-the-box API&#39;s for things like ACL, Auth, Caching, Emails and Logging.  Doctrine does a great job at providing a stable and solid ORM, and a great means of managing updates through a simple migration strategy.  The best part about finding a solid framework you enjoy working with, is you eventually end up with a great set of features you&#39;ve built that can be dropped in to any project, giving you quite the head-start.  When I started ( which was actually over a year ago, my motivation comes in spurts), Doctrine 2 was in development, but wasn&#39;t where it is now.  I like the concept they&#39;ve taken with the new version, but currently I&#39;m using their 1.x version.
+
+</p>
+<p>YUI is being used pretty sparingly right now.  I think the only modules being used currently are containers for the dialogs, buttons, and menu.  I need to give a shout out to the <a href="http://code.google.com/p/minify/">Minify</a> library as well, which is handling the JS/CSS minification quite nicely.
+
+</p>
+<p>I have some follow-up posts I plan on writing to go into more detail on some of the items and techniques I used in regards to things like Caching, but until I&#39;ve had more of a chance to put the site through a ringer, I&#39;ll hold off.  Anyways, if you&#39;re building a new site, looking for frameworks, I highly recommend everything I mentioned above.
+
+</p>
+
+]]></description></item><item><title>?: PHP Coalesce</title><link href="http://selfcontained.us/2010/11/30/php-coalesce"/><pubDate>Tue Nov 30 2010 17:30:00 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>I&#39;ve often been a fan of Javascript&#39;s way of using the logical OR operator as a coalescing operator, or way to default values.  It&#39;s a very handy operator for shortening ternary expressions.
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> myValue = someOtherValue || <span class="keyword">true</span>;</code></pre>
+<p>I just found out in PHP 5.3 they added an operator to do just that.  <code>?:</code>
+
+</p>
+<pre><code class="lang-php"><span class="variable">$myValue</span> = <span class="variable">$someOtherValue</span> ?: <span class="keyword">true</span>;</code></pre>
+<p>That&#39;s all, carry on.
+
+</p>
+<p><a href="http://www.php.net/ChangeLog-5.php#5.3.0">http://www.php.net/ChangeLog-5.php#5.3.0</a>
+</p>
+
+]]></description></item><item><title>YUI =&gt; jQuery?</title><link href="http://selfcontained.us/2010/11/19/yui-jquery"/><pubDate>Fri Nov 19 2010 13:17:26 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Recently a question was posted on Quora, &quot;<a href="http://www.quora.com/How-could-YUI3-improve-its-image-compared-to-jQuery-MooTools-etc/">How could YUI3 improve its image compared to jQuery, MooTools, etc.?</a>&quot;.  John Resig, of jQuery fame, gave a great answer on his thoughts to the question.  <a href="http://www.nczonline.net/blog/2010/11/03/response-to-john-resigs-comments-about-yui/">Nicholas Zakas responds</a> with another great explanation of why he doesn&#39;t think the comparison is needed.  I disagree with Zakas in regards to <a href="http://alexsexton.com/blog/2010/08/on-rolling-your-own-large-jquery-apps/">jQuery not being sufficient for &quot;scalable web applications&quot;</a>.  Both have great points, and are worth a read if you&#39;re actively involved with frontend engineering.
+
+</p>
+
+]]></description></item><item><title>Yahoo!  A New Adventure</title><link href="http://selfcontained.us/2010/10/22/yahoo-new-adventure"/><pubDate>Fri Oct 22 2010 08:57:11 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>My family and I are getting ready for a new adventure in our lives.  We&#39;ll be moving to Denver where I&#39;m super excited to go work for [Yahoo!][yahoo] and the <a href="http://associatedcontent.com">Associated Content</a> team.  Getting a chance to work for Yahoo, and live and work in the Denver area is the perfect culmination of opportunity and lifestyle that my family and I have been waiting for.  The work and product that the Associated Content team has created, and is developing is something I&#39;m looking forward to being a part of.  With every career move come new experiences and opportunities to learn and contribute, and I&#39;m sure this will prove the same.  On a technical note, I&#39;ll get a chance to continue using the technologies I love, PHP, MySQL, and some HTML/CSS/Javascript goodness.  On a non-technical note, if anyone is looking for a house to buy in Rio Rancho, New Mexico, I know a great one for sale!
+
+</p>
+
+]]></description></item><item><title>YUI 2.8 Learning the Library book review</title><link href="http://selfcontained.us/2010/09/04/yui-2-8-learning-the-library-book-review"/><pubDate>Sat Sep 04 2010 14:23:40 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I&#39;ve had a chance to read through the latest book on YUI, titled <a href="https://www.packtpub.com/yahoo-user-interface-yui-2-8-learning-library/book">YUI 2.8 Learning the Library</a>.  The book was written by Daniel Barreiro and Dan Wellman, and was published by Packt Publishing.  For the impatient that don&#39;t want to read the whole review, and want to get right to the goods, here they are.  The book has great coverage of the YUI library, including all of the popular widget like Calendar, Container, Autocomplete, DataSource, DataTable and more.  If you&#39;ren new to YUI and looking for an overage and how-to for the library, this book would serve you well.  If you&#39;re an experienced YUI developer, you probably won&#39;t get a whole lot out of this book that you don&#39;t already know, or couldn&#39;t gain through reading <a href="http://developer.yahoo.com/yui/2/">YUI&#39;s online examples and API</a>.
+
+</p>
+<p>If you read through this book in it&#39;s entirety, you&#39;ll come to understand the main reason I love YUI, that it&#39;s not just a collection of widgets and utilities.  This book explains the full feature set of the YUI library, and you&#39;ll realize that it&#39;s the perfect foundation to build on top of.  The author&#39;s do a really great job of showing in depth examples that teach you how the components work.  I particularly liked reading the chapter on DataSource and DataTable.
+
+</p>
+<p>If the online examples provided by Yahoo! leave you wondering how things are working, this book fills in those gaps.  Most of the book is targeted to beginners and intermediate developers.
+
+</p>
+
+]]></description></item><item><title>&quot;YUI 2.8: Learning the Library&quot; Free Chapter</title><link href="http://selfcontained.us/2010/08/13/yui-2-8-learning-the-library-free-chapter"/><pubDate>Fri Aug 13 2010 07:20:24 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p><a href="https://www.packtpub.com/sites/default/files/0707-chapter-7-menus.pdf">Grab a free chapter</a> of the latest <a href="http://developer.yahoo.com/yui/">YUI</a> book from Packt Publishing, &quot;<strong>YUI 2.8: Learning the Library</strong>.&quot;  The free chapter covers something we all use a lot, menus.  I&#39;m checking it out now, and suggest if you use, or are thinking about using YUI, you do the same since it&#39;s free.
+
+</p>
+<p>I&#39;ve been using YUI for about 4 years now, and love it.  I love the solid foundation it provides for me to build my own interfaces on top of.  I love the polished UI elements it provides as well.  I&#39;m looking forward to reading this book in its entirety.  Check back soon for a full review of it.
+
+</p>
+
+]]></description></item><item><title>First iPhone App - LDS Gems</title><link href="http://selfcontained.us/2010/05/08/first-iphone-app-lds-gems"/><pubDate>Sat May 08 2010 11:49:08 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<hr>
+<blockquote>
+<p>   Update: LDS Gems is no longer on the Apple App Store.  <a href="http://gems.lds.org">http://gems.lds.org</a> was not actively updated for a period of time, but is once again.  I don&#39;t have plans to put LDS Gems back on the App Store.
+
+</p>
+</blockquote>
+<hr>
+<p>After a bit of work, I finally got my first iPhone app on the App store.  It&#39;s nothing extraordinary, but was a learning experience for the most part.  It&#39;s called <strong>LDS Gems</strong>, and is an easier way to manage, read, and share the quotes and stories provided by the LDS church at <a href="http://gems.lds.org">http://gems.lds.org</a>.
+
+</p>
+<p>I used <a href="http://www.appcelerator.com">Titanium Appcelerator</a> to build it, and was really impressed with how much easier it was to develop using Javascript as opposed to Objective-C.  This is probably due to having quite a bit more experience with Javascript than the later, but I really enjoyed it and would recommend it to anyone wanting to dive into iPhone App development, but not ready to take on learning Objective-C.
+
+</p>
+
+]]></description></item><item><title>Doctrine Model Hydration</title><link href="http://selfcontained.us/2010/03/30/doctrine-model-hydration"/><pubDate>Tue Mar 30 2010 09:54:21 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I was just deep into figuring out what was causing a certain bug and wanted to take the time to share my findings.  When working with <a href="http://doctrine-project.org">Doctrine</a> we were having some scattered issues of models that we had loaded from the database, modified, and then they were getting stomped on by the database again before saving, wiping out all modifications we had made.  In this particular case we changed one attribute of a model, then called save.  Our save triggers some validation that checks quite a few relationships and business rules between them.   Somewhere in that process, a new copy of the model we were trying to save was being hydrated from the database, and overwriting our previous version.  This seemed like pretty odd, and unwanted behavior, especially in our situation.
+
+</p>
+<p>After digging around Doctrine&#39;s documentation and user group a bit, I came across an attribute setting that enables/disables this exact feature, <code>Doctrine::ATTR_HYDRATE_OVERWRITE</code>.   By default this is set to true.  If you hydrate a model from the database, and then somewhere later grab that same model through a reference, or a request to the Doctrine_Table, it will overwrite the model that is currently in memory for that key with a clean one from the database.   Setting this attribute to false was a great fix for us, and ensures our code will run as intended.
+
+</p>
+<pre><code class="lang-php"><span class="variable">$doctrine</span> = Doctrine_Manager::getInstance();
+<span class="variable">$doctrine</span>->setAttribute( Doctrine::ATTR_HYDRATE_OVERWRITE, <span class="keyword">false</span> );</code></pre>
+
+]]></description></item><item><title>Getting keycode values in Javascript</title><link href="http://selfcontained.us/2009/09/16/getting-keycode-values-in-javascript"/><pubDate>Wed Sep 16 2009 08:49:44 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I&#39;ve had to work with getting user input values based off of the keycode from the event a few times, and figured I&#39;d throw together some of that functionality in case anyone else is wrestling with this.  Below is a simple &quot;<strong>keycode</strong>&quot; object that has a few utility functions, and maps of values to keycodes.
+
+</p>
+<pre><code class="lang-javascript">keycode = {
+
+    getKeyCode : <span class="keyword">function</span>(e) {
+        <span class="keyword">var</span> keycode = <span class="keyword">null</span>;
+        <span class="keyword">if</span>(window.event) {
+            keycode = window.event.keyCode;
+        }<span class="keyword">else</span> <span class="keyword">if</span>(e) {
+            keycode = e.which;
+        }
+        <span class="keyword">return</span> keycode;
+    },
+
+    getKeyCodeValue : <span class="keyword">function</span>(keyCode, shiftKey) {
+        shiftKey = shiftKey || <span class="keyword">false</span>;
+        <span class="keyword">var</span> value = <span class="keyword">null</span>;
+        <span class="keyword">if</span>(shiftKey === <span class="keyword">true</span>) {
+            value = <span class="keyword">this</span>.modifiedByShift[keyCode];
+        }<span class="keyword">else</span> {
+            value = <span class="keyword">this</span>.keyCodeMap[keyCode];
+        }
+        <span class="keyword">return</span> value;
+    },
+
+    getValueByEvent : <span class="keyword">function</span>(e) {
+        <span class="keyword">return</span> <span class="keyword">this</span>.getKeyCodeValue(<span class="keyword">this</span>.getKeyCode(e), e.shiftKey);
+    },
+
+    keyCodeMap : {
+        <span class="number">8</span>:<span class="string">"backspace"</span>, <span class="number">9</span>:<span class="string">"tab"</span>, <span class="number">13</span>:<span class="string">"return"</span>, <span class="number">16</span>:<span class="string">"shift"</span>, <span class="number">17</span>:<span class="string">"ctrl"</span>, <span class="number">18</span>:<span class="string">"alt"</span>, <span class="number">19</span>:<span class="string">"pausebreak"</span>, <span class="number">20</span>:<span class="string">"capslock"</span>, <span class="number">27</span>:<span class="string">"escape"</span>, <span class="number">32</span>:<span class="string">" "</span>, <span class="number">33</span>:<span class="string">"pageup"</span>,
+        <span class="number">34</span>:<span class="string">"pagedown"</span>, <span class="number">35</span>:<span class="string">"end"</span>, <span class="number">36</span>:<span class="string">"home"</span>, <span class="number">37</span>:<span class="string">"left"</span>, <span class="number">38</span>:<span class="string">"up"</span>, <span class="number">39</span>:<span class="string">"right"</span>, <span class="number">40</span>:<span class="string">"down"</span>, <span class="number">43</span>:<span class="string">"+"</span>, <span class="number">44</span>:<span class="string">"printscreen"</span>, <span class="number">45</span>:<span class="string">"insert"</span>, <span class="number">46</span>:<span class="string">"delete"</span>,
+        <span class="number">48</span>:<span class="string">"0"</span>, <span class="number">49</span>:<span class="string">"1"</span>, <span class="number">50</span>:<span class="string">"2"</span>, <span class="number">51</span>:<span class="string">"3"</span>, <span class="number">52</span>:<span class="string">"4"</span>, <span class="number">53</span>:<span class="string">"5"</span>, <span class="number">54</span>:<span class="string">"6"</span>, <span class="number">55</span>:<span class="string">"7"</span>, <span class="number">56</span>:<span class="string">"8"</span>, <span class="number">57</span>:<span class="string">"9"</span>, <span class="number">59</span>:<span class="string">";"</span>,
+        <span class="number">61</span>:<span class="string">"="</span>, <span class="number">65</span>:<span class="string">"a"</span>, <span class="number">66</span>:<span class="string">"b"</span>, <span class="number">67</span>:<span class="string">"c"</span>, <span class="number">68</span>:<span class="string">"d"</span>, <span class="number">69</span>:<span class="string">"e"</span>, <span class="number">70</span>:<span class="string">"f"</span>, <span class="number">71</span>:<span class="string">"g"</span>, <span class="number">72</span>:<span class="string">"h"</span>, <span class="number">73</span>:<span class="string">"i"</span>, <span class="number">74</span>:<span class="string">"j"</span>, <span class="number">75</span>:<span class="string">"k"</span>, <span class="number">76</span>:<span class="string">"l"</span>,
+        <span class="number">77</span>:<span class="string">"m"</span>, <span class="number">78</span>:<span class="string">"n"</span>, <span class="number">79</span>:<span class="string">"o"</span>, <span class="number">80</span>:<span class="string">"p"</span>, <span class="number">81</span>:<span class="string">"q"</span>, <span class="number">82</span>:<span class="string">"r"</span>, <span class="number">83</span>:<span class="string">"s"</span>, <span class="number">84</span>:<span class="string">"t"</span>, <span class="number">85</span>:<span class="string">"u"</span>, <span class="number">86</span>:<span class="string">"v"</span>, <span class="number">87</span>:<span class="string">"w"</span>, <span class="number">88</span>:<span class="string">"x"</span>, <span class="number">89</span>:<span class="string">"y"</span>, <span class="number">90</span>:<span class="string">"z"</span>,
+        <span class="number">96</span>:<span class="string">"0"</span>, <span class="number">97</span>:<span class="string">"1"</span>, <span class="number">98</span>:<span class="string">"2"</span>, <span class="number">99</span>:<span class="string">"3"</span>, <span class="number">100</span>:<span class="string">"4"</span>, <span class="number">101</span>:<span class="string">"5"</span>, <span class="number">102</span>:<span class="string">"6"</span>, <span class="number">103</span>:<span class="string">"7"</span>, <span class="number">104</span>:<span class="string">"8"</span>, <span class="number">105</span>:<span class="string">"9"</span>,
+        <span class="number">106</span>: <span class="string">"*"</span>, <span class="number">107</span>:<span class="string">"+"</span>, <span class="number">109</span>:<span class="string">"-"</span>, <span class="number">110</span>:<span class="string">"."</span>, <span class="number">111</span>: <span class="string">"/"</span>,
+        <span class="number">112</span>:<span class="string">"f1"</span>, <span class="number">113</span>:<span class="string">"f2"</span>, <span class="number">114</span>:<span class="string">"f3"</span>, <span class="number">115</span>:<span class="string">"f4"</span>, <span class="number">116</span>:<span class="string">"f5"</span>, <span class="number">117</span>:<span class="string">"f6"</span>, <span class="number">118</span>:<span class="string">"f7"</span>, <span class="number">119</span>:<span class="string">"f8"</span>, <span class="number">120</span>:<span class="string">"f9"</span>, <span class="number">121</span>:<span class="string">"f10"</span>, <span class="number">122</span>:<span class="string">"f11"</span>, <span class="number">123</span>:<span class="string">"f12"</span>,
+        <span class="number">144</span>:<span class="string">"numlock"</span>, <span class="number">145</span>:<span class="string">"scrolllock"</span>, <span class="number">186</span>:<span class="string">";"</span>, <span class="number">187</span>:<span class="string">"="</span>, <span class="number">188</span>:<span class="string">","</span>, <span class="number">189</span>:<span class="string">"-"</span>, <span class="number">190</span>:<span class="string">"."</span>, <span class="number">191</span>:<span class="string">"/"</span>, <span class="number">192</span>:<span class="string">"`"</span>, <span class="number">219</span>:<span class="string">"["</span>, <span class="number">220</span>:<span class="string">"\\"</span>, <span class="number">221</span>:<span class="string">"]"</span>, <span class="number">222</span>:<span class="string">"'"</span>
+    },
+
+    modifiedByShift : {
+        <span class="number">192</span>:<span class="string">"~"</span>, <span class="number">48</span>:<span class="string">")"</span>, <span class="number">49</span>:<span class="string">"!"</span>, <span class="number">50</span>:<span class="string">"@"</span>, <span class="number">51</span>:<span class="string">"#"</span>, <span class="number">52</span>:<span class="string">"$"</span>, <span class="number">53</span>:<span class="string">"%"</span>, <span class="number">54</span>:<span class="string">"^"</span>, <span class="number">55</span>:<span class="string">"&amp;"</span>, <span class="number">56</span>:<span class="string">"*"</span>, <span class="number">57</span>:<span class="string">"("</span>, <span class="number">109</span>:<span class="string">"_"</span>, <span class="number">61</span>:<span class="string">"+"</span>,
+        <span class="number">219</span>:<span class="string">"{"</span>, <span class="number">221</span>:<span class="string">"}"</span>, <span class="number">220</span>:<span class="string">"|"</span>, <span class="number">59</span>:<span class="string">":"</span>, <span class="number">222</span>:<span class="string">"\""</span>, <span class="number">188</span>:<span class="string">"&lt;"</span>, <span class="number">189</span>:<span class="string">">"</span>, <span class="number">191</span>:<span class="string">"?"</span>,
+        <span class="number">96</span>:<span class="string">"insert"</span>, <span class="number">97</span>:<span class="string">"end"</span>, <span class="number">98</span>:<span class="string">"down"</span>, <span class="number">99</span>:<span class="string">"pagedown"</span>, <span class="number">100</span>:<span class="string">"left"</span>, <span class="number">102</span>:<span class="string">"right"</span>, <span class="number">103</span>:<span class="string">"home"</span>, <span class="number">104</span>:<span class="string">"up"</span>, <span class="number">105</span>:<span class="string">"pageup"</span>
+    }
+
+};</code></pre>
+<p>Typically, you would have an event listener on an input that would call <code>keycode.getValueByEvent()</code>.  You would have to pass in the event, (which is by default the first parameter passed into your event listener function).  This code handles the shift key modifier and the value that results from using it.
+</p>
+
+]]></description></item><item><title>Scoping Javascript closures in loops</title><link href="http://selfcontained.us/2009/01/23/scoping-javascript-closures-in-loops"/><pubDate>Fri Jan 23 2009 15:45:45 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>It must have been something I ate, cause this is like the third post in 2 days I think!  This is a quick one, but super handy to know if you don&#39;t already.  There is  semi-common problem I run into, and it has to do with scoping of closures inside of loops.  Lets get straight to the code so its easier to understand what I&#39;m talking about:
+
+</p>
+<pre><code class="lang-html">&lt;html>
+&lt;script type=<span class="string">"text/javascript"</span> src=<span class="string">"http://yui.yahooapis.com/2.6.0/build/utilities/utilities.js"</span> >&lt;/script>
+&lt;script type=<span class="string">"text/javascript"</span>>
+    <span class="keyword">var</span> values = [<span class="number">0</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>];
+    <span class="keyword">for</span>(<span class="keyword">var</span> idx in values) {
+        <span class="comment">//First Test - will have incorrent scoping</span>
+        YAHOO.util.Event.addListener(window, <span class="string">'load'</span>, <span class="keyword">function</span>() {
+            YAHOO.util.Dom.get(<span class="string">'wrong-scope'</span>).innerHTML += <span class="string">' '</span>+values[idx]+<span class="string">' '</span>;
+        });
+        <span class="comment">//Second Test - scoping will be correct</span>
+        YAHOO.util.Event.addListener(window, <span class="string">'load'</span>, <span class="keyword">function</span>(scopedValue) {
+            <span class="keyword">return</span> <span class="keyword">function</span>() {
+                YAHOO.util.Dom.get(<span class="string">'right-scope'</span>).innerHTML += <span class="string">' '</span>+scopedValue+<span class="string">' '</span>;
+            }
+        }(values[idx]));
+
+    }
+&lt;/script>
+
+&lt;body>
+&lt;div id=<span class="string">"wrong-scope"</span>>
+&lt;h1>Wrong Scope&lt;/h1>
+&lt;/div>
+&lt;div id=<span class="string">"right-scope"</span>>
+&lt;h1>Right Scope&lt;/h1>
+&lt;/div>
+
+&lt;/body>
+&lt;/html></code></pre>
+<p>In this example, there is a simple array of ordered values, and then a loop over those values.  For each iteration of the loop, there is an onload listener added that will dump that value into a div.  You&#39;ll see the first loop always dumps 9, because the scoping is wrong when the closure executes, and the last time through the loop sets the scope of <code>values[idx]</code>.
+
+</p>
+<p>The second section does some unique handy-work to correct the scoping.  A listener is added like before, but the closure is created in a specific fashion in order to get the scope to be the way we want at runtime.  For the closure in the second section, we create a self-executing function, passing in a parameter that is the current value in our array of numbers.  That function runs, and returns another function that does the appending to the div of the value.  This second, <em>inner-function</em> is what will execute on page load.  Because of the outer-function we immediately called, the variable passed into it, the current value from our array, will be available, and properly scoped for our inner-function.
+
+</p>
+<p><img src="http://www.selfcontained.us/wp-content/uploads/2009/01/scoping.gif" alt="scoping">
+
+</p>
+<p>This is a handy trick when you have a situation where you are looping over a collection, and are providing some type of callback/closure for each entry, but need some proper scoping.
+
+</p>
+
+]]></description></item><item><title>Browser autocomplete and keyup events</title><link href="http://selfcontained.us/2009/01/23/browser-autocomplete-and-keyup-events"/><pubDate>Fri Jan 23 2009 11:43:36 GMT-0700 (MST)</pubDate><description><![CDATA[
+<hr>
+<blockquote>
+<p>Update: This issue appears resolved in modern browsers, and was only noticed in IE7 and Firefox 3 (Linux &amp; Windows)
+
+</p>
+</blockquote>
+<hr>
+<p>Browser oddities are nothing new, but I came across one today that I haven&#39;t heard about before, and couldn&#39;t seem to find many comments about on the interwebs.  To get to the gist of it, when the native browser autocomplete functionality pops up for a text input, it also triggers a keyup event for the input.  I had some logic going on where I was firing an ajax lookup request as a user types in a value, and was waiting for a delay in their typing to fire the ajax request.  I noticed I would often get two events fired at almost the same time.  At first I chalked it up to oddities with setTimeout() not being completely accurate, but with more investigation, the native autocomplete that the browser supplies was the culprit.
+
+</p>
+<p>To try this for yourself, here is the test code I was using:
+
+</p>
+<pre><code class="lang-html">&lt;html>
+    &lt;script type=<span class="string">"text/javascript"</span>>
+        <span class="keyword">function</span> handleEvent() {
+            document.getElementById(<span class="string">'keyup-test'</span>).innerHTML += document.getElementById(<span class="string">'test'</span>).value + <span class="string">'&lt;br />'</span>;
+        }
+    &lt;/script>
+&lt;body>
+    &lt;form action=<span class="string">""</span>>
+    &lt;div id=<span class="string">"keyup-test"</span>>&lt;h1>Test Keyup Event&lt;/h1>&lt;/div>
+    &lt;input type=<span class="string">"text"</span> id=<span class="string">"test"</span> onkeypress=<span class="string">"handleEvent();"</span> value=<span class="string">"bradharris"</span> />
+    &lt;/form>
+&lt;/body>
+&lt;/html></code></pre>
+<p>You&#39;ll see the current value of the input written out into a div above the input on each keyup event.  To get the autocomplete functionality of the browser working, just type in a value, and then submit the page by pressing enter when the input is focused.  The browser will then have that entry in its history of values for that input, and will start firing the keyup an extra time when it finds a match and shows the autocomplete box.  To turn it off, just add <code>autocomplete=&quot;off&quot;</code> to the input tag, then it should only fire once per keyup.  I&#39;m pretty perplexed as to why this exists, and I&#39;ve seen it in <strong>IE7 and Firefox3 (Linux and Windows)</strong>.  If anyone knows why its around, I&#39;d love to hear.
+</p>
+
+]]></description></item><item><title>Followup on YUI : getFirstDescendantBy()</title><link href="http://selfcontained.us/2009/01/22/followup-on-yui-getfirstdescendantby"/><pubDate>Thu Jan 22 2009 16:59:09 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Awhile ago <a href="http://www.selfcontained.us/2008/08/20/javascript-getfirstdescendantby/">I posted on an additional function for YAHOO.util.Dom called <strong>getFirstDescendantBy()</strong></a>.  I was following <a href="http://sourceforge.net/tracker/?func=detail&amp;atid=836479&amp;aid=2068369&amp;group_id=165715">the ticket submitted to the YUI Sourceforge tracker</a>, and saw that it had been closed out, and that a new function called <code>YAHOO.util.Dom.getElementBy()</code> was added to fill this request.  I decided to check out <a href="https://github.com/yui/yui2">the newly available YUI source code on github</a>, and noticed some nice enhancements.  <code>YAHOO.util.Dom.getElementBy(method, tag, root)</code> is now available (not in the latest stable release yet though), and does what <code>getFirstDescendantBy</code> did, and in most cases its much faster.  Great job to the YUI team!
+
+</p>
+<p>Instead of taking a recursive approach to walking the graph like I had, YUI is just grabbing all the children by tag name, even if you don&#39;t supply a tag name (in this case it will use &#39;<em>&#39;).  This turns out to be much faster than the recursive approach for most cases.  If you happen to be looking for an element in a very large dom tree structure, and that object is located early on in the tree, the new YUI approach will be slower than the recursive approach.  Fortunately, when I say <em>*&quot;large&quot;</em></em> dom tree, I&#39;m talking about a tree about 8 nodes deep, iterated 500-1000 times.  Most of us don&#39;t work with sites displaying that much html on a single page, so its definitely not a concern in my book.
+
+</p>
+<p>Digging in further, I noticed that the new <code>getElementBy</code> just delegates to <code>YAHOO.util.Dom.getElementsBy()</code>, which has now been improved to accept a number of additional parameters than what 2.6.0 has available.  One of those is a boolean, <code>firstOnly</code>, which will stop after it finds the first match, and return it.  It looks like there are also additional parameters for passing in an object to your apply method, and making that object the scope.
+
+</p>
+<p>I&#39;m excited about this change, and it means I will soon be able to use the native YUI function for what I needed.  I&#39;d suggest that anyone else that was using something such as <code>getFirstDescendantBy()</code> that I had shared look at switching once YUI releases the new function.  Thanks again YUI.
+
+</p>
+
+]]></description></item><item><title>Javascript widget approaches: Singleton vs Prototype</title><link href="http://selfcontained.us/2008/12/23/javascript-widget-approaches-singleton-vs-prototype"/><pubDate>Tue Dec 23 2008 14:55:27 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Recently I&#39;ve been doing some work setting up some standard javascript widgets for a web application I am working on.  By widget, I&#39;m referring to items such as javascript date pickers, tooltips, autocomplete inputs, etc.  I&#39;m building on top of YUI for this approach, but the principles I&#39;d like to discuss are applicable to any library.  YUI provides a fantastic javascript library, and a collection of widgets right out of the box.  More than likely, as you add them to your application, you&#39;ll want to wrap or extend them in your own javascript implementations to get them functioning as desired.  To accomplish this, I typically have taken one of two approaches, and these are the topics I&#39;d like to cover.  To provide a working example, I&#39;ll use a simple wrapper for a YUI Calendar widget that is linked to a text input, and opens by clicking a calendar icon.
+
+</p>
+<p><img src="/images/datepicker.gif" alt="image of a date picker widget">
+
+</p>
+<h1>Prototype approach</h1>
+<p>This approach basically creates an instance of the javascript widget for each input field, and the javascript widget object utilizes the prototype definition so the internal functions can be defined once in memory.  Below is an example of what a simple DatePicker widget that &quot;wraps&quot; the YUI Calendar widget, would look like:
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">function</span> DatePicker(icon, field) {
+    <span class="keyword">this</span>.icon = icon;
+    <span class="keyword">this</span>.field = field;
+    YAHOO.util.Event.addListener(window, <span class="string">'load'</span>, <span class="keyword">this</span>.initialize, <span class="keyword">this</span>, <span class="keyword">true</span>);
+}
+DatePicker.prototype = {
+
+    icon : <span class="keyword">null</span>,
+
+    field : <span class="keyword">null</span>,
+
+    calendar : <span class="keyword">null</span>,
+
+    id : <span class="string">'date-calendar'</span>,
+
+    container : <span class="keyword">null</span>,
+
+    initialize : <span class="keyword">function</span>() {
+        YAHOO.util.Event.addListener(<span class="keyword">this</span>.icon, <span class="string">'click'</span>, <span class="keyword">this</span>.click, <span class="keyword">this</span>, <span class="keyword">true</span>);
+        <span class="keyword">this</span>.renderContainer();
+    },
+
+    renderContainer : <span class="keyword">function</span>() {
+        <span class="keyword">this</span>.container = document.createElement(<span class="string">'div'</span>);
+        <span class="keyword">this</span>.container.style.display = <span class="string">'none'</span>;
+        document.body.appendChild(<span class="keyword">this</span>.container);
+    },
+
+    click : <span class="keyword">function</span>(e) {
+        <span class="keyword">if</span>(<span class="keyword">this</span>.calendar === <span class="keyword">null</span>) {
+            <span class="keyword">this</span>.renderCalendar();
+        }
+        <span class="keyword">this</span>.calendar.show();
+        <span class="keyword">this</span>.positionCalendar();
+    },
+
+    renderCalendar : <span class="keyword">function</span>() {
+        <span class="keyword">this</span>.calendar = <span class="keyword">new</span> YAHOO.widget.Calendar(<span class="keyword">this</span>.field+<span class="string">'-calendar'</span>, <span class="keyword">this</span>.container, { title:<span class="string">'Choose a date:'</span>, close:<span class="keyword">true</span>, navigator: <span class="keyword">true</span> } );
+        <span class="keyword">this</span>.calendar.selectEvent.subscribe(<span class="keyword">this</span>.populateDateField, <span class="keyword">this</span>, <span class="keyword">true</span>);
+        <span class="keyword">this</span>.calendar.render();
+    },
+
+    positionCalendar : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> position = YAHOO.util.Dom.getXY(<span class="keyword">this</span>.field);
+        position[<span class="number">1</span>] = position[<span class="number">1</span>] + <span class="number">25</span>;
+        YAHOO.util.Dom.setXY(<span class="keyword">this</span>.container, position);
+    },
+
+    populateDateField : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> date = <span class="keyword">this</span>.calendar.getSelectedDates()[<span class="number">0</span>];
+        YAHOO.util.Dom.get(<span class="keyword">this</span>.field).value = date.getMonth() + <span class="string">'/'</span> + date.getDate() + <span class="string">'/'</span> + date.getFullYear();
+        <span class="keyword">this</span>.calendar.hide();
+    },
+
+    hide : <span class="keyword">function</span>() {
+        <span class="keyword">if</span>(<span class="keyword">this</span>.calendar !== <span class="keyword">null</span>) {
+            <span class="keyword">this</span>.calendar.hide();
+        }
+    }
+
+};</code></pre>
+<p>The html for creating this widget is as simple as follows:
+
+</p>
+<pre><code class="lang-html">&lt;script type=<span class="string">"text/javascript"</span>>
+    <span class="keyword">new</span> DatePicker(<span class="string">'date-icon'</span>, <span class="string">'date-field'</span>);
+&lt;/script>
+&lt;label>Date: &lt;/label>
+&lt;input type=<span class="string">"text"</span> name=<span class="string">"date-field"</span> id=<span class="string">"date-field"</span> />
+&lt;img src=<span class="string">"images/calendar.png"</span> id=<span class="string">"date-icon"</span> /></code></pre>
+<p>Some benefits to this approach are that the instance of the widget object has a direct reference to the input id and calendar icon id, and nothing has to be &#39;inspected&#39; at runtime execution of the events.  This leads to some cleaner code on a small level.  It also has some downsides as we&#39;ll discuss below.
+
+</p>
+<h1>Singleton approach</h1>
+<p>The Singleton approach creates a &#39;singleton&#39; wrapper object that creates <strong>ONE</strong> YUI Calendar widget that is re-used across all input fields.  At runtime, the icon clicked on is used to determine which input field is in use through an extra attribute added to the icon image called &#39;data-field&#39; that contains the id of the input it is linked to.  This code would look as follows:
+
+</p>
+<pre><code class="lang-javascript">DatePickerSingleton = {
+
+    calendar : <span class="keyword">null</span>,
+
+    id : <span class="string">'date-calendar'</span>,
+
+    container : <span class="string">'date-calendar-container'</span>,
+
+    activeInput : <span class="keyword">null</span>,
+
+    initialize : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> icons = YAHOO.util.Selector.query(<span class="string">'.date-icon'</span>);
+        YAHOO.util.Event.addListener(icons, <span class="string">'click'</span>, <span class="keyword">this</span>.click, <span class="keyword">this</span>, <span class="keyword">true</span>);
+        <span class="keyword">this</span>.renderContainer();
+    },
+
+    renderContainer : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> container = document.createElement(<span class="string">'div'</span>);
+        container.id = <span class="keyword">this</span>.container;
+        container.style.display = <span class="string">'none'</span>;
+        document.body.appendChild(container);
+    },
+
+    click : <span class="keyword">function</span>(e) {
+        <span class="keyword">this</span>.activeInput = common.byEvent(e).getAttribute(<span class="string">'data-field'</span>);
+        <span class="keyword">if</span>(<span class="keyword">this</span>.calendar === <span class="keyword">null</span>) {
+            <span class="keyword">this</span>.renderCalendar();
+        }
+        <span class="keyword">this</span>.calendar.show();
+        <span class="keyword">this</span>.positionCalendar();
+    },
+
+    renderCalendar : <span class="keyword">function</span>() {
+        <span class="keyword">this</span>.calendar = <span class="keyword">new</span> YAHOO.widget.Calendar(<span class="keyword">this</span>.id, <span class="keyword">this</span>.container, { title:<span class="string">'Choose a date:'</span>, close:<span class="keyword">true</span>, navigator: <span class="keyword">true</span> } );
+        <span class="keyword">this</span>.calendar.selectEvent.subscribe(<span class="keyword">this</span>.populateDateField, <span class="keyword">this</span>, <span class="keyword">true</span>);
+        <span class="keyword">this</span>.calendar.render();
+    },
+
+    positionCalendar : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> position = YAHOO.util.Dom.getXY(YAHOO.util.Dom.get(<span class="keyword">this</span>.activeInput));
+        position[<span class="number">1</span>] = position[<span class="number">1</span>] + <span class="number">25</span>;
+        YAHOO.util.Dom.setXY(<span class="keyword">this</span>.container, position);
+    },
+
+    populateDateField : <span class="keyword">function</span>() {
+        <span class="keyword">var</span> date = <span class="keyword">this</span>.calendar.getSelectedDates()[<span class="number">0</span>];
+        YAHOO.util.Dom.get(<span class="keyword">this</span>.activeInput).value = date.getMonth() + <span class="string">'/'</span> + date.getDate() + <span class="string">'/'</span> + date.getFullYear();
+        <span class="keyword">this</span>.calendar.hide();
+    },
+
+    hide : <span class="keyword">function</span>() {
+        <span class="keyword">if</span>(<span class="keyword">this</span>.calendar !== <span class="keyword">null</span>) {
+            <span class="keyword">this</span>.calendar.hide();
+        }
+    }
+
+};
+YAHOO.util.Event.addListener(window, <span class="string">'load'</span>, DatePickerSingleton.initialize, DatePickerSingleton, <span class="keyword">true</span>);</code></pre>
+<p>The html for creating this widget is as simple as follows:
+
+</p>
+<pre><code class="lang-html">&lt;div <span class="keyword">class</span>=<span class="string">"code-highlight"</span>>&lt;code>
+&lt;label>Date: &lt;/label>
+&lt;input type=<span class="string">"text"</span> id=<span class="string">"date_field"</span> />
+&lt;img src=<span class="string">"images/calendar.png"</span> <span class="keyword">class</span>=<span class="string">"date-icon"</span> data-field=<span class="string">"date_field"</span> /></code></pre>
+<h1>Results</h1>
+<p>After testing out each of these approaches using a range from 1 to 1000 inputs on a page, I noticed some interesting side effects.  Both approaches load using almost the same amount of resources.  You might think the Prototype approach would require more memory on page load to create each of the widgets for each input, but in reality, due to the prototype definition, the only additional memory needed for each widget is for the unique element id&#39;s stored as attributes.  Each approach also uses a &#39;lazy loading&#39; approach, that causes the Calendar widget to not be created until the user actually clicks on an icon.  This is where the two approaches begin to differ.
+
+</p>
+<p>The Singleton approach consumes a small amount of additional memory on the first click, as it creates the Calendar widget at this time.  For subsequent clicks the memory stays the same, as the objects have already been created, and are just being re-used.  A downside to this approach is that on page load, a javascript css selector query has to be executed to gather all date picker icons to set up click events for them.  This &#39;can&#39; be time consuming with a large number of elements (1000+).
+
+</p>
+<p>The Prototype approach will consume additional memory for each new icon that is clicked, as there is a Calendar widget created lazily for each input at the runtime click event of the icon.  From my simple tests, I saw an increase ranging from 51.2 kb to 358.4 kb for each additional widget instantiated (each new icon clicked).  In contrast to the Singleton approach, on page load there is no css selector query to run in order to attach the click events, as the element ids are already in memory from the instantiation of each &#39;wrapper&#39; (DatePicker) object.  This saves the possibly heavy css based query, but adds an initialize function for each input to the page load, which can be time consuming as well.
+
+</p>
+<p>Recently I have been using the Singleton approach for creating widgets where it is possible, as I believe it scales better, and avoids the problem of memory increasing as users go about using the application.  This can be accentuated even further when page life cycle is long such as in the case of single page web applications.  I found this little exercise interesting in my own work, and hope it is informative for some other people out there.  I&#39;d love to hear any comments regarding this from everyone out there.
+
+</p>
+
+]]></description></item><item><title>slikcalc 1.1 release</title><link href="http://selfcontained.us/2008/09/11/slikcalc-11-release"/><pubDate>Thu Sep 11 2008 14:47:52 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I&#39;ve just released a new build of <a href="https://github.com/selfcontained/slikcalc/">slikcalc - javascript calculator library</a> that includes a few small bug fixes, and some shortcuts to the API.  The new API for creating calculators looks as follows:
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> columnCalc1 = slikcalc.create(<span class="string">'column'</span>, {
+    total: { id: <span class="string">'cc-1-total'</span> },
+    registerListeners: <span class="keyword">true</span>,
+    calcOnLoad: <span class="keyword">true</span>
+});</code></pre>
+<p>as opposed to:
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> columnCalc1 = <span class="keyword">new</span> slikcalc.ColumnCalc({
+    total: { id: <span class="string">'cc-1-total'</span> },
+    registerListeners: <span class="keyword">true</span>,
+    calcOnLoad: <span class="keyword">true</span>
+});</code></pre>
+<p>Its a small change, but I think it&#39;s easier to use.  Of course, the old way will still work, so existing code will not break with the addition to the API.  Some other additions include a new, fully commented debug version of the code, along with using YUI compressor for the minified version, which shaved off a few kb from previous versions.  <a href="http://slikcalc.selfcontained.us/docs/1.1/">Full documentation</a> is also included in the download.  Take a look and feel free to comment with any feedback.
+
+</p>
+
+]]></description></item><item><title>Google Chrome - Holy Smokes</title><link href="http://selfcontained.us/2008/09/03/google-chrome-holy-smokes"/><pubDate>Wed Sep 03 2008 08:22:59 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>The cats out of the bag, Google released their new browser, <a href="http://www.google.com/chrome/">Chrome</a>.  I was pretty excited about the new features that this browser would include, some of which are a brand new Javascript VM called V8, along with using Webkit for the rendering engine.  The fact that each tab in the browser is its own process is also awesome news for web developers.  I decided to take a try using it to run the web application I develop at my job, which is a large Case Management System by <a href="http://www.justicesystems.com/">Justice Systems</a>.
+
+</p>
+<p>I decided to pick a fairly rich page with lots of content and javascript for the benchmark.  This page has multiple tabs, and updates a client side data model as the user edits it.  As far as page load times go, IE 7 and Firefox 2 were both right around 1.2 - 1.3 seconds just to render this page, and parse the javascript.  Chrome comes in at 663 milliseconds, about 50% faster.
+
+</p>
+<p>The next test I performed was toggling between tabs (<a href="http://developer.yahoo.com/yui/tabview/">YUI tabs</a>).  This toggling also involves some front end validation along with storing and retrieving of client side data, so I figured it was a pretty good use case for testing out the new Javascript engine.  IE 7 comes in at an average of 123 milliseconds to switch tabs, Firefox 2 at 143 milliseconds, and Chrome blows them away at 20 milliseconds.
+
+</p>
+<p>With Chrome, Google is stating that the browser is a viable platform, which is great news for web developers who have started to see the limitations of current browsers.  It makes sense that Google would be the one to push a browser like this, as many of their products are web-based, and rely on a performant browser.  I can&#39;t help but think that they have been waiting to see if other browser vendors could step it up, but eventually just decided go ahead and get er dun&#39; themselves.  Way to go Google, this is great news for users and developers.
+
+</p>
+
+]]></description></item><item><title>Teaching an old Framework new tricks!</title><link href="http://selfcontained.us/2008/08/29/teaching-an-old-framework-new-tricks"/><pubDate>Fri Aug 29 2008 05:04:49 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>In summary, I want to discuss an alternative approach for developing a rich, dynamic UI using Struts1.  The basic approach is:
+
+</p>
+<ul>
+<li>Java Object to JSON string</li>
+<li>JSON String consumed by Javascript</li>
+<li>Manipulate UI, update Javascript model</li>
+<li>On submit of form serialize Javascript model to JSON string</li>
+<li>Set value of hidden input to JSON string</li>
+<li>JSON string to Java Object on server side</li>
+</ul>
+<p>Modern web development frameworks have come a long way, in almost every language.  Many of the current popular frameworks have integrated widgets or processes for building rich ajax powered UI&#39;s with little hand-rolled code.  This makes developing those applications faster and easier.  Unfortunately, we can&#39;t always use the latest and greatest new frameworks as developers.
+
+</p>
+<p>While working on a J2EE web application that was started over 5 years ago, I&#39;ve learned a lot about how frameworks have evolved since then.  When this project was started, Struts 1 was very popular, and a proven framework, so was naturally adopted for the front end.  Over time, many things were built to integrate with Struts 1 and provide custom functionality that was required.  This makes it very difficult, and highly improbable that a new front end framework can be swapped in due to the time and money that would have to be invested.  At some point that may be a necessity, but until then, you have to work with what you have.
+
+</p>
+<p>Building a rich UI using ajax in Struts 1 is ... interesting.  Sruts1 is very form centric, and all of your form inputs in your UI map directly back to some field on your Java form object in one way or another.  This makes it tricky to provide a flexible data structure for a rich UI that may be adding or removing elements.  Try adding/removing elements to your page dynamically, and having them map back to your Struts1 Form in a clean way and you&#39;ll see what I&#39;m talking about.  A recent approach I took to tackling this situation was to depend very little on the framework.
+
+</p>
+<p>Lets say I have a Java object graph I want to load into some front end javascript model to work with in the UI.  I can fetch this asynchronously as the page loads as a JSON payload, or just dump it to the page into the appropriate place so my javascript consumes it.  Either way, I need to make sure its painless to convert this data structure to a JSON string, or create it from a JSON string.  This will make passing it back and forth from the server side to the client side much easier.
+
+</p>
+<p>I can then use this as my front end data model to display, change, remove and add data.  When I&#39;m ready to commit my changes, I then have to get that back to my server side Java action.  Obviously I could also make the persistence portion asynchronous as well, but sometimes thats problematic, as you may have a lot that goes on in the backend and the rendering of a new page (security, alerts, etc.) that you would have to replicate if you were to do this asynchronously.  To keep everything working as normal, one approach is to take your javascript data graph, and serialize it into a json string and set it into an html hidden input.  This input can be mapped back to your Struts form, so back in your action you have a json string you decode and create the appropriate Java objects from.  I&#39;ve found this to be a very useful approach when trying to build a very rich UI on top of an older framework.  In summary, here are the steps followed:
+
+</p>
+<ul>
+<li>Build your data as Java objects that can be serialized into JSON, and created from a JSON string.</li>
+<li>Consume the JSON data into your javascript and work with it as needed in the front end.</li>
+<li>On submit of the form, serialize the Javascript object into a JSON string and set it onto the value of a hidden input</li>
+<li>Get the value of the hidden input on the server side as your framework supports, and convert the JSON string back to your Java objects</li>
+</ul>
+
+]]></description></item><item><title>Javascript getFirstDescendantBy()</title><link href="http://selfcontained.us/2008/08/20/javascript-getfirstdescendantby"/><pubDate>Wed Aug 20 2008 07:39:47 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<hr>
+<blockquote>
+<p>   Update: <a href="/2009/01/22/followup-on-yui-getfirstdescendantby/">A new native YUI function is in the works, and does this job better</a>
+
+</p>
+</blockquote>
+<hr>
+<p>Recently I was working on optimizing some javascript, and found a slow area that was trying to find the first focusable input in a certain area of the page, and it was taking anywhere from 100 - 500 milliseconds, depending on the size of the DOM tree in that element.  After digging into it, I noticed it was using the <code>YAHOO.util.dom.getElementsBy()</code> method, which basically had to walk through the whole DOM tree in this case, testing each node against the boolean method passed in.  After calling that, it would then return the first, if any, element that getElementsBy returned.  Obviously this was a bad approach, as after you find the first match, there is no need to go further.
+
+</p>
+<p>I did a little research, and saw that this had come up in <a href="http://tech.groups.yahoo.com/group/ydn-javascript/message/19684">a thread on the YUI group</a>.  I ended up writing a small method to fill in this functionality I wanted out of YUI, called <code>getFirstDescendantBy(rootEl, method)</code>.  The function takes a root element, or string id of that element, and then a function to test each element against that has the element being tested as the only input.  This function passed in should return a boolean, and is similar to the way the YUI dom function <code>getElementsBy()</code> works.  Hopefully this will help out some people in similar situations.
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">function</span> getFirstDescendantBy(rootEl, method) {
+    <span class="keyword">var</span> root = typeof rootEl === <span class="string">'string'</span> ? document.getElementById(rootEl) : rootEl;
+    <span class="keyword">var</span> firstDescendant = <span class="keyword">null</span>;
+    <span class="keyword">var</span> children = root.childNodes;
+    <span class="keyword">for</span>(<span class="keyword">var</span> idx in children) {
+        <span class="keyword">var</span> child = children[idx];
+        <span class="keyword">if</span>(child.nodeType === <span class="number">1</span>) {
+            <span class="keyword">if</span>(method(child)) {
+                firstDescendant = child;
+                <span class="keyword">break</span>;
+            }<span class="keyword">else</span> <span class="keyword">if</span>(child.childNodes.length > <span class="number">0</span>) {
+                <span class="keyword">var</span> recursiveResult = getFirstDescendantBy(child, method);
+                <span class="keyword">if</span>(recursiveResult !== <span class="keyword">null</span>) {
+                    firstDescendant = recursiveResult;
+                    <span class="keyword">break</span>;
+                }
+            }
+        }
+    }
+    <span class="keyword">return</span> firstDescendant;
+}</code></pre>
+
+]]></description></item><item><title>Back to Firefox 2</title><link href="http://selfcontained.us/2008/07/23/back-to-firefox-2"/><pubDate>Wed Jul 23 2008 12:13:58 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>If you&#39;re like me, you use <a href="https://addons.mozilla.org/en-US/firefox/addon/1843">Firebug</a> a lot, like, all day long.  Long gone are the days of resorting to alerts.  The worst I&#39;ll fall back to is using the YUI logger for IE.
+
+</p>
+<p>I&#39;ve recently been having a lot of issues using Firefox 3, and Firebug.  Firefox 3 has been pretty consistent at crashing a few times throughout the day.  Firebug 1.2 has recently been causing me more and more troubles, to the point where I can&#39;t get it to not stop at breakpoints that I&#39;ve removed, or it stops at my breakpoint, but doesn&#39;t let me play it through or debug, or remove the breakpoint, because it doesn&#39;t show up as being registered.
+
+</p>
+<p>I&#39;m sure these are hiccups with the new version of Firefox 3, but it is pretty disruptive to me as I&#39;m developing.  I reverted back to Firefox 2 and an older version of Firebug until they get this sorted out, which I&#39;m sure will be soon.  For anyone looking, you can find old versions of Firefox on <a href="http://www.filehippo.com/download_firefox/4403/">FileHippo</a>, and past versions of Firebug from the normal download site.
+
+</p>
+
+]]></description></item><item><title>Complex Javascript Event Handling: EventMediator</title><link href="http://selfcontained.us/2008/07/16/complex-javascript-event-handling-eventmediator"/><pubDate>Wed Jul 16 2008 19:50:07 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>A large enterprise sized project I work on uses YUI library extensively, and events are a huge part of the rich front end we&#39;re developing.  What you start to learn quickly about UI events, is that dependencies between different events start to get very complicated very fast.  When A depends on B, but B needs to wait for C and D and E to finish, but E needs to wait for F to finish, you have a complex situation on your hands.  Up until recently we were able to rely mostly on just using CustomEvents in YUI to handle this for us.
+
+</p>
+<p>Where that starts to break down is when you have one event, <strong>A</strong>, that is dependent on multiple other events, <strong>B, C, D</strong>.  You now have to manually keep track of what has fired, and make sure you don&#39;t fire that <strong>A</strong> until <strong>B, C and D</strong> have all fired.  With very little code, here is a simple class that can be used in conjunction with YIU CustomEvents.  It will handle the &#39;book-keeping&#39; of firing what you want when all the events you have designated fire.
+
+</p>
+<pre><code class="lang-javascript">EventMediator = {
+
+    addActivationRecord : <span class="keyword">function</span>(record) {
+        record = record || {};
+        <span class="keyword">var</span> that = <span class="keyword">this</span>;
+        <span class="keyword">for</span>(<span class="keyword">var</span> idx in record.events) {
+            <span class="keyword">var</span> eventRecord = record.events[idx];
+            <span class="keyword">if</span>(eventRecord.event !== <span class="keyword">null</span>) {
+                eventRecord.fired = <span class="keyword">false</span>;
+                eventRecord.event.subscribe(<span class="keyword">function</span>(scopedEvent) {
+                    <span class="keyword">return</span> <span class="keyword">function</span>(e) {
+                        scopedEvent.fired = <span class="keyword">true</span>;
+                        that.fireActivation(record);
+                    }
+                }(eventRecord));
+            }
+        }
+    },
+
+    fireActivation : <span class="keyword">function</span>(record) {
+        <span class="keyword">var</span> fired = <span class="keyword">true</span>;
+        <span class="keyword">for</span>(<span class="keyword">var</span> idx in record.events) {
+            <span class="keyword">if</span>(record.events[idx].fired === <span class="keyword">false</span>) {
+                fired = <span class="keyword">false</span>;
+                <span class="keyword">break</span>;
+            }
+        }
+        <span class="keyword">if</span>(fired === <span class="keyword">true</span>) {
+            record.activate.call(record.scope);
+        }
+    }
+
+};</code></pre>
+<p>Using the EventMediator would look something like the following:
+
+</p>
+<pre><code class="lang-javascript">EventMediator.addActivationRecord({
+    events : [
+        { event : myObj.someYUICusomEvent },
+        { event : myObj.anotherYUICusomEvent }
+    ],
+    activate : myObj1.myActivationCallback,
+    scope : myObj1
+});</code></pre>
+<p>It&#39;s pretty straightforward I think.  You call <code>addActivationRecord</code>, passing in an array of objects, whose &#39;event&#39; property points to a YUI CustomEvent.  You also provide an <em>activate</em> callback method, and give it a scope in which to call the method.  For my purposes so far this has worked pretty well, although I&#39;m sure it could be built up to be much more robust.  Hope it helps someone out!
+</p>
+
+]]></description></item><item><title>slickifying Slikcalc to version 1.0</title><link href="http://selfcontained.us/2008/04/26/slickifying-slikcalc-to-version-10"/><pubDate>Sat Apr 26 2008 22:23:26 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>A new version of <a href="https://github.com/selfcontained/slikcalc/">slikcalc</a> was released.  This release simplified some code, mainly the <a href="/2008/04/22/format-currency-in-javascript-simplified/">slikcalc.formatCurrency() method</a>.  There was also a bug fix where a calculator could be initialized more than once depending on timing.  As always, feel free to leave feedback on the library.  Enjoy.
+
+</p>
+<p><a href="https://github.com/selfcontained/slikcalc/tags">Download the latest slikcalc</a>
+
+</p>
+<p><a href="http://slikcalc.selfcontained.us"><img src="/images/slikcalc.jpg" alt=""></a>
+
+</p>
+
+]]></description></item><item><title>Format Currency in Javascript (simplified)</title><link href="http://selfcontained.us/2008/04/22/format-currency-in-javascript-simplified"/><pubDate>Tue Apr 22 2008 06:55:42 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>While working on <a href="http://slikcalc.selfcontained.us">slikcalc</a>, I was trying to find the easiest way to format a number for currency.  I had found some implementations that were pretty complex, using regex and absolute values, and thought there had to be a simpler way.  This is what I came up with and it works in all the browsers I&#39;ve tested (IE 6/7, Firefox 2 (windows &amp; mac), Opera 9 (windows and mac).
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">function</span> formatCurrency(num) {
+    num = isNaN(num) || num === <span class="string">''</span> || num === <span class="keyword">null</span> ? <span class="number">0.00</span> : num;
+    <span class="keyword">return</span> parseFloat(num).toFixed(<span class="number">2</span>);
+}</code></pre>
+<p>Just thought I&#39;d share for anyone working with something similar.
+
+</p>
+
+]]></description></item><item><title>Slikcalc - Easy Javascript Calculations</title><link href="http://selfcontained.us/2008/03/18/slikcalc-easy-javascript-calculations"/><pubDate>Tue Mar 18 2008 17:47:46 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p><a href="https://github.com/selfcontained/slikcalc/"><img src="/images/slikcalc-logo.gif" alt="Slikcalc - Easy Javascript Calculations"></a>
+
+</p>
+<p>I&#39;ve put together a small javascript library that greatly simplifies creating dynamic javascript calculators.  It works great for just about anything, ranging from calculating columns of values, to a complex custom formula.  You can even write your own calculators and plug them into the framework with little effort.  Calculations update automatically as the user types in their values.
+
+</p>
+<h2>Check out the details on the library, and download it <a href="https://github.com/selfcontained/slikcalc/">from github</a></h2>
+<pre><code class="lang-javascript"><span class="keyword">var</span> columnCalc1 = <span class="keyword">new</span> slikcalc.ColumnCalc({
+    total: { id: <span class="string">'cc-1-total'</span> },
+    registerListeners: <span class="keyword">true</span>,
+    calcOnLoad: <span class="keyword">true</span>
+});
+columnCalc1.addRow({ id: <span class="string">'cc-1-1'</span> });
+columnCalc1.addRow({ id: <span class="string">'cc-1-2'</span> });
+columnCalc1.addRow({
+    id: <span class="string">'cc-1-3'</span>,
+    checkbox: { id: <span class="string">'cc-1-3-c'</span> }
+});</code></pre>
+<p>A few key features of Slikcalc:
+
+</p>
+<ul>
+<li><p>Slikcalc works with popular Javascript libraries, including YUI, jQuery, Dojo, Mootools and Prototype.  Adding support for new libraries is very simple as well.</p>
+</li>
+<li><p>Slikcalc handles attaching your event listeners for when the users type in values, click checkboxes, and when the page loads.</p>
+</li>
+</ul>
+<ul>
+<li>Slikcalc provides a simple interface for chaining multiple calculators so one can fire another, and so on.</li>
+</ul>
+
+]]></description></item><item><title>Simple jQuery image rollover script</title><link href="http://selfcontained.us/2008/03/08/simple-jquery-image-rollover-script"/><pubDate>Sat Mar 08 2008 22:14:45 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Just a simple script I use to automate image rollovers that may be of use to others.  Just include this javascript:
+
+</p>
+<hr>
+<blockquote>
+<p>   UPDATED: I felt motivated to simplify this even more according to many of the comments below.  This takes advantage of html5 data attributes instead of a custom one, and eliminates the need for a special hover css class.  It also eliminates the need for a temporary variable to store the current image in by using a &#39;tmp&#39; attribute, and then removing it when finished.  It also preloads the images for the rollover.
+
+</p>
+</blockquote>
+<hr>
+<pre><code class="lang-javascript">$(<span class="keyword">function</span>() {
+    $(<span class="string">'img[data-hover]'</span>).hover(<span class="keyword">function</span>() {
+        $(<span class="keyword">this</span>)
+            .attr(<span class="string">'tmp'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'src'</span>))
+            .attr(<span class="string">'src'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'data-hover'</span>))
+            .attr(<span class="string">'data-hover'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'tmp'</span>))
+            .removeAttr(<span class="string">'tmp'</span>);
+    }).each(<span class="keyword">function</span>() {
+        $(<span class="string">'&lt;img />'</span>).attr(<span class="string">'src'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'data-hover'</span>));
+    });;
+});</code></pre>
+<p>This should be used with an img element as follows:
+
+</p>
+<pre><code class="lang-html">&lt;img src="first.gif" data-hover="second.gif" /></code></pre>
+<hr>
+<p>Original code:
+
+</p>
+<pre><code class="lang-javascript">$(<span class="keyword">function</span>() {
+    $(<span class="string">'.rollover'</span>).hover(<span class="keyword">function</span>() {
+        <span class="keyword">var</span> currentImg = $(<span class="keyword">this</span>).attr(<span class="string">'src'</span>);
+        $(<span class="keyword">this</span>).attr(<span class="string">'src'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'hover'</span>));
+        $(<span class="keyword">this</span>).attr(<span class="string">'hover'</span>, currentImg);
+    }, <span class="keyword">function</span>() {
+        <span class="keyword">var</span> currentImg = $(<span class="keyword">this</span>).attr(<span class="string">'src'</span>);
+        $(<span class="keyword">this</span>).attr(<span class="string">'src'</span>, $(<span class="keyword">this</span>).attr(<span class="string">'hover'</span>));
+        $(<span class="keyword">this</span>).attr(<span class="string">'hover'</span>, currentImg);
+    });
+});</code></pre>
+<p>This will pick up an image that looks as follows, and setup the rollover image:
+
+</p>
+<pre><code class="lang-html">&lt;img src=<span class="string">"first.gif"</span> hover=<span class="string">"second.gif"</span>  <span class="keyword">class</span>=<span class="string">"rollover"</span>/></code></pre>
+
+]]></description></item><item><title>Combine your JS and CSS files with pack:tag</title><link href="http://selfcontained.us/2008/02/29/combine-your-js-and-css-files-with-packtag"/><pubDate>Fri Feb 29 2008 20:36:12 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Recently I needed to combine a whole heap of javascript files into a few files for performance reasons.  On this particular project, we have a very large number of custom widgets we&#39;ve written to extend the awesome YUI library.  Keeping our javascript in small, modularized files is great for development and maintenance, and debugging.  It does however cause issues when the client has to download close to 100 small &lt; 1kb files.  Enter <a href="http://www.galan.de/pages/packtag">pack:tag</a>, an open source jsp tag library for combining javascript and css written by Daniel Galán y Martins.  Its as simple as including a jar, adding the tld and properties files, then using it on your pages.
+
+
+</p>
+<blockquote>
+<p>   pack:tag is a JSP-Taglib that minifies, compresses and combines resources (like JavaScript and CSS) and caches them in memory or in a generated file. It works transparent to the user/developer and the compressing-algorithms are pluggable.
+
+
+</p>
+</blockquote>
+<p>So far its worked great, and the reduction in the number of files, along with filesize by using the built in minify option has been a huge benefit.  When I need to debug, its as simple as setting an enable flag to false, and I now have all the individual files at my disposal.  If you&#39;re developing in Java-land, and need to combine your js/css files, I strongly recommend checking out this great open source tag library.
+
+</p>
+<p><a href="http://www.galan.de/pages/packtag">pack:tag</a>
+
+</p>
+
+]]></description></item><item><title>New project live, and new server</title><link href="http://selfcontained.us/2007/11/06/new-project-live-and-new-server"/><pubDate>Tue Nov 06 2007 10:13:04 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>After a lot of work on my part, and on the owners, a project I&#39;ve been working on for awhile went live.  <a href="http://www.pujbaby.com">Pujbaby.com</a> went live this weekend.  Congratulations to them, and I&#39;m glad to have this project go live.  We have more work to do, but they now have their online store in production.
+
+</p>
+<p><a href="http://www.pujbaby.com"><img src="/images/puj.jpg" alt="pujbaby.com"></a>
+
+</p>
+<p>Part of getting <a href="http://www.pujbaby.com">pujbaby.com</a> live was acquiring a new server from <a href="http://www.mediatemple.net">MediaTemple</a>.  We went with their Dedicated Virtual Server, and so far I&#39;ve really been impressed with it.  I haven&#39;t moved all my sites over to it yet, but its been performing much better than the Grid Server account we&#39;ve been using (which performs quite well considered the cost and features provided).  If you&#39;re looking to upgrade your hosting environment, but keep the costs relatively low, then definitely check it out (no i&#39;m not getting any referral bonuses :) ).
+
+</p>
+
+]]></description></item><item><title>Ajax requests when users stop typing</title><link href="http://selfcontained.us/2007/10/07/ajax-requests-when-users-stop-typing"/><pubDate>Sun Oct 07 2007 09:49:24 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I was tackling a problem the other day related to triggering ajax requests as a user was typing in an input field.  Sometimes you can just fire off the request on the blur event, but other times you want to fire it off from a keypress event.  Sending xhr requests on every keypress can quickly overload your server and/or database.  More often than not, if a user is typing, you can wait until they are done, or for a pause in their button mashing to send the request.  This saves your server from getting hammered by un-needed requests, but still gives the user the experience desired.
+
+</p>
+<p>A simple approach to this is wrapping your method that handles the particular ajax request with another simple method that records the time when they key was pressed, and queues up the ajax request method using <strong>setTimeout</strong>.  Here&#39;s an example below:
+
+</p>
+<pre><code class="lang-javascript">Example = {
+
+   interval : <span class="number">1000</span>,
+
+   lastKeypress : <span class="keyword">null</span>,
+
+   interceptKeypress : <span class="keyword">function</span>() {
+      <span class="keyword">this</span>.lastKeypress = <span class="keyword">new</span> Date().getTime();
+      <span class="keyword">var</span> that = <span class="keyword">this</span>;
+      setTimeout(<span class="keyword">function</span>() {
+         <span class="keyword">var</span> currentTime = <span class="keyword">new</span> Date().getTime();
+         <span class="keyword">if</span>(currentTime - that.lastKeypress > that.interval) {
+            that.sendRequest();
+         }
+      }, that.interval + <span class="number">100</span>);
+   },
+
+   sendRequest : <span class="keyword">function</span>() {
+      <span class="comment">//Perform xhr request</span>
+   }
+
+}</code></pre>
+<p>The <code>Example.interceptKeypress()</code> method now becomes what you tie the keyup event of your text input to instead of going straight to the <code>Example.sendRequest()</code> method.  The current time is recorded, and then <code>Example.sendRequest()</code> is queued up using <code>setTimeout()</code> and a closure to handle scoping and ensure that enough time has passed since the last keyup event (100 ms is added to the current time as a buffer).
+
+</p>
+<p>This approach can easily be added onto existing event handlers if you find you&#39;re sending too many requests in particular situations, or for any type of event handling where you want to limit when/how often it is fired.  Hope this benefits some people!
+</p>
+
+]]></description></item><item><title>Rich Web Experience 2007</title><link href="http://selfcontained.us/2007/09/07/rich-web-experience-2007"/><pubDate>Fri Sep 07 2007 07:48:24 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I was lucky enough to be able attend the Rich Web Experience this year, put on by NFJS.  We&#39;re on the 2nd day of the conference, and so far its been great.  I got to attend a great presentation by Greg Murray on <a href="http://jmaki.com/">jMaki</a>.  Those guys are doing some interesting work on that project that seems to wrap up a number of js frameworks pretty well, and provide a common api/interface for using them in conjunction with eachother.
+
+</p>
+<p>Other highlights of day 1 were Douglas Crockford&#39;s presentation on Javascript: The Good Parts, and his keynote on The State of Ajax.  Its great to get to hear from someone who has a lot of personal experience in the history of the language and get his insight.  So far its been great, and I&#39;m looking forwad to day 2!
+
+</p>
+
+]]></description></item><item><title>Javascript developement for Enterprise Applications</title><link href="http://selfcontained.us/2007/06/29/developing-javascript-for-enterprise-applications"/><pubDate>Fri Jun 29 2007 15:19:44 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I&#39;ve had a few conversations with friends and co-workers about this very topic.  My day job consists of working on a large Enterprise Application running on a Java platform.  My evenings are mostly spent (sometimes at my wifes disapproval) working on smaller websites and projects for clients in PHP.  Javascript is used fairly heavily in both scenarios, but what I&#39;ve noticed over time is that how I develop in the different situations varies quite a bit.
+
+</p>
+<p>For smaller sites I really enjoy using the jQuery framework, mostly because of its small footprint, and ease of use.  At my day job our own Javascript framework is backed by YUI, which I also really enjoy working with.  YUI is very well suited for us there as it provides great building blocks for creating your own components (not that jQuery doesn&#39;t, but theres a lot of basic components you can build off of in YUI that are only available as 3rd party plugins to jQuery).  That being said, when developing different components on an Enterprise Application I get a chance to create something that can be utilized across a large variety of pages, and more often than not, used in slightly different ways.  This leads to writing Javascript components in a contained, object-oriented fashion.  While I do this as well for smaller sites I work on, without the vast number of pages that a large Enterprise Application has, it usually isn&#39;t very beneficial to create a highly configurable component that can be used in multiple different scenarios and manipulated countless different ways.  Its never bad to create something like that, but the cost of time isn&#39;t always worth it for small sites.
+
+</p>
+<p>A couple of things that I&#39;ve come to notice that have really helped me create Javascript components that are highly adaptable and easy to re-use in different scenarios are as follows:
+
+</p>
+<ul>
+<li><p><strong>Make attributes and parameters configurable through a configuration object.</strong>  I can&#39;t count how many times I&#39;ve written something, thinking its only going to need attribute x and attribute y, so theres no need to stuff them into a configuration object, and shortly after come to realize I also need to add parameter z.  So instead of having a constructor like this:</p>
+<pre><code class="lang-javascript"><span class="keyword">function</span> Component(one, two) {
+  <span class="keyword">this</span>.one = one;
+  <span class="keyword">this</span>.two = two;
+}</code></pre>
+<p>you can save a lot of frustrations when coming back later and having to update all of your instantiations of that object to add a 3rd parameter by doing the following:</p>
+<pre><code class="lang-javascript"><span class="keyword">function</span> SweetComponent(config) {
+  config = config || {};
+  <span class="keyword">this</span>.one = config.one || <span class="keyword">null</span>;
+  <span class="keyword">this</span>.two = config.two || <span class="keyword">null</span>;
+}</code></pre>
+<p>Theres different ways of creating a constructor to set values from a config object, but thats the general idea, allowing you to add extra attributes without having to go back and fix all of your instantiations.</p>
+</li>
+</ul>
+<ul>
+<li><strong>Provide event hooks</strong>.  Another thing I&#39;ve come across that I find helpful is providing hooks into different events that the component might perform.  For example, one thing I&#39;ve used a lot is a row selector component that lets you click a row to select a record.  By using the <code>YUI CustomEvent</code>, and firing off an <code>afterToggle</code> event when the row has been clicked and selected, it allows other components to tap into that, and perform anything they need without having to manipulate the row selector component at all.  Providing these hooks can be done different ways, and using <code>YUI CustomEvents</code> is just one of them.  Other frameworks like Dojo offer an advice framework that I think is pretty nice as well, letting you wrap anything you might need.  The disadvantage to this is, as a developer, it requires more intimate knowledge of the Objects and their functions, knowing where to put your advice.  By writing your own custom events, and firing them off in the correct spots, someone can look at your object and see that there are only so many events to connect to, and pick the appropriate one.</li>
+</ul>
+
+]]></description></item><item><title>PHP Sessions in the db</title><link href="http://selfcontained.us/2007/05/03/php-sessions-in-the-db"/><pubDate>Thu May 03 2007 08:39:46 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<p>I read an article today that I thought was great, and may be the answer to some oddities I&#39;ve experienced lately.  I host my sites on a MediaTemple GridServer account.  Occasionally, as I&#39;m logged into a site I&#39;ve done, my session seems to just get blown away, and I lose my log in credentials.  I noticed this recently as I was working on AdroitAuthentication class and trying to clean up how I was handling user authentication.  I added in cookie handling to allow automatic logins if desired, and this seems to have alleviated the problem I was having with dissapearing sessions.  Anyways, back to the article I read...
+
+</p>
+<p><a href="http://www.devshed.com/c/a/PHP/Storing-PHP-Sessions-in-a-Database/">Storing PHP Sessions in a Database</a>
+
+</p>
+<p>This article described how a common problem with a multiple server environment, which helps for load balancing, is that sessions in PHP are by default stored on the hard disk.  As you bounce around servers from load balancing, those files may not get copied with you, thereby causing your session to either be non-existent, or stale.  A solution is to change PHP to use the database for sessions instead.  Its a great article, and I&#39;m going to give it a shot tonight and make it a feature in Adroit php framework.  After excitingly discussing this with a co-worker of mine, he smiled at me and said he wouldn&#39;t comment on how <a href="http://rubyonrails.org/">Rails</a> has that built into it already.  Its funny how the more I develop Adroit, the more Rails-like features I find myself implementing...  One day I&#39;ll give Rails a shot, but I really love PHP and without people pushing the envelope with it it won&#39;t progress as a language.
+
+</p>
+
+]]></description></item><item><title>SayItOnTheWall.com</title><link href="http://selfcontained.us/2007/03/02/sayitonthewallcom"/><pubDate>Fri Mar 02 2007 18:42:23 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>Today I finished up the work needed for <a href="http://sayitonthewall.com">SayItOnTheWall.com</a> to go live.  I had a lot of fun working on this site as I got to use dojo for the first time in a full project, and really enjoyed it.  The site was created for a business my wife has started up to create and sell Vinyl wall words as home decorations.  From a technical point of view, it utilizes an Ajax shopping cart that I created, along with a <a href="http://www.sayitonthewall.com/products/custom/">&quot;build-your-own&quot; saying component</a> that lets customers pick and choose from a large collection of fonts, colors and sizes, and see what they&#39;re saying will look like on the spot.
+
+</p>
+<p><img src="/images/sayitonthewall.gif" alt="SayItOnTheWall.com">
+
+</p>
+
+]]></description></item></channel></rss>

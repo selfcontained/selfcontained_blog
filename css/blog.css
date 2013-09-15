@@ -1,0 +1,49 @@
+html{-webkit-font-smoothing:antialiased;}
+body{font-family:"Lucida Grande","Lucida Sans Unicode","Lucida Sans",Verdana,Tahoma,sans-serif;font-size:14px;line-height:180%;color:black;margin:0;padding:25px;border-top:6px #000 solid;text-align:center;}
+#main{text-align:left;margin:auto;width:1024px;}
+header{background:url('/images/selfcontained.png') no-repeat left center;padding:35px 100px;}header h1{margin:0px;}
+header a{color:#000;}header a:visited,header a:hover{color:#000;}
+header small{padding-left:10px;font-size:.75em;font-weight:normal;}
+#content-container{position:relative;}
+aside.sidebar{margin-left:25px;width:275px;float:left;}
+#content{float:left;width:720px;padding-top:25px;}
+footer{border-top:4px solid #e0e0e0;clear:both;}
+h1{font-size:170%;border-top:4px solid #aaa;padding-top:.5em;margin-top:1.5em;}h1:first-child{margin-top:0 !important;padding-top:.25em !important;border-top:none !important;}
+h2{font-size:150%;margin-top:1.5em;border-top:4px solid #e0e0e0;padding:.5em 0em;}
+h3{margin-top:1em;}
+p{margin:1em 0!important;line-height:1.5em!important;}
+a{color:#4183C4;text-decoration:none;}a:visited{color:#4183C4;text-decoration:none;}
+a:hover{text-decoration:underline;}
+.clear{clear:both;}
+.sidebar h3{margin-top:0px;}
+.sidebar li{padding:0px;}.sidebar li .date{font-size:.80em;}
+.sidebar .about{font-size:.80em;}.sidebar .about img{border-radius:50em;margin-right:7px;margin-top:2px;}
+.archive li{clear:both;list-style:none;}.archive li span{width:260px;float:left;text-align:right;padding-right:10px;}
+.archive li a{float:left;}
+article h2{border-bottom:2px dashed #e0e0e0;}article h2 a{color:#000;}article h2 a:visited,article h2 a:hover{color:#000;}
+article .meta{line-height:1.3em;font-size:.9em;}article .meta img{border-radius:50em;float:left;margin:2px 10px;}
+article .meta .tags{float:right;margin:0px 25px 0px;}article .meta .tags li{float:left;list-style:none;padding:0px 5px;}
+article .content{margin:25px;}
+article blockquote{font-style:italic;}
+article .footer{border-top:solid 1px #e0e0e0;margin:0px 25px;padding:5px;}
+code{color:#000;padding:1px 5px;border:solid 1px #E8E8E8;background:#f8f8ff;border-radius:0.25em;-moz-border-radius:0.25em;-0-border-radius:0.25em;-webkit-border-radius:0.25em;font-family:monospace;overflow-x:auto;}
+pre code{display:block;padding:0.5em;border-left:solid 5px #E8E8E8;margin-bottom:1.5em;}
+pre .comment,pre .template_comment,pre .diff .header,pre .javadoc{color:#998;font-style:italic;}
+pre .keyword,pre .css .rule .keyword,pre .winutils,pre .javascript .title,pre .lisp .title,pre .subst{color:#000;font-weight:bold;}
+pre .number,pre .hexcolor{color:#40a070;}
+pre .string,pre .tag .value,pre .phpdoc,pre .tex .formula{color:#dd1144;}
+pre .title,pre .id{color:#900;font-weight:bold;}
+pre .javascript .title,pre .lisp .title,pre .subst{font-weight:normal;}
+pre .class .title,pre .haskell .label,pre .tex .command{color:#458;font-weight:bold;}
+pre .tag,pre .tag .title,pre .rules .property,pre .django .tag .keyword{color:#000080;font-weight:normal;}
+pre .attribute,pre .variable,pre .instancevar,pre .lisp .body{color:#008080;}
+pre .regexp{color:#009926;}
+pre .class{color:#458;font-weight:bold;}
+pre .symbol,pre .ruby .symbol .string,pre .ruby .symbol .keyword,pre .ruby .symbol .keymethods,pre .lisp .keyword,pre .tex .special,pre .input_number{color:#990073;}
+pre .builtin,pre .built_in,pre .lisp .title{color:#0086b3;}
+pre .preprocessor,pre .pi,pre .doctype,pre .shebang,pre .cdata{color:#999;font-weight:bold;}
+pre .deletion{background:#ffdddd;}
+pre .addition{background:#ddffdd;}
+pre .diff .change{background:#0086b3;}
+pre .chunk{color:#aaaaaa;}
+pre .tex .formula{opacity:0.5;}

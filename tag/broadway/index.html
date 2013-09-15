@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="en"><head><title>broadway - selfcontained</title><meta name="keywords" content="software,web development,brad harris"><meta name="author" content="Brad Harris"><meta name="robots" content="index,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/css/blog.css" rel="stylesheet"><link rel="alternate" type="application/rss+xml" title="selfcontained » rss" href="http://www.selfcontained.us/feed/rss.xml"></head><body><div id="main"><header><h1><a href="/">selfcontained</a><small>[web development]</small></h1></header><div id="content-container"><section id="content"><h2>Articles tagged with <i>"broadway"</i> (2)</h2><article><h2><a href="/2012/09/20/using-express-with-broadway">using express with broadway</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/javascript">javascript</a></li><li><a href="/tag/node.js">node.js</a></li><li><a href="/tag/broadway">broadway</a></li><li><a href="/tag/express">express</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Thursday September 20, 2012</div><div class="name">By Brad Harris</div></div><div class="content"><p><a href="http://expressjs.com/">Express</a> is by no doubt an extremely popular http application server/framework for node.js.  In this article I&#39;d like to demonstrate how you can take advantage of <a href="https://github.com/flatiron/broadway">broadway</a> and <a href="http://expressjs.com/">express</a> together.
+
+</p>
+<p>In this approach, we&#39;ll treat the <em>http server</em> that <code>express</code> provides as just another plugin to our <code>broadway</code> application.
+
+</p>
+<h2>express http plugin</h2>
+<p>First we&#39;ll create an http plugin encapsulating express.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// http.js</span>
+
+<span class="keyword">var</span> express = <span class="keyword">require</span>(<span class="string">'express'</span>);
+
+<span class="keyword">var</span> HttpPlugin = exports;
+
+HttpPlugin.name = <span class="string">'http'</span>;
+
+HttpPlugin.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    <span class="keyword">var</span> server = app.http = express();
+    server.<span class="keyword">use</span>(server.router);
+
+    <span class="keyword">require</span>(<span class="string">'./routes'</span>)(app);
+};
+
+HttpPlugin.init = <span class="keyword">function</span>(done) {
+    done();
+};</code></pre>
+<p>I&#39;d also suggest defining your routes in their own module(s), and passing along the broadway application.  This will allow them to take full advantage of any other functionality your application acquires through other plugins.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// routes.js</span>
+module.exports = <span class="keyword">function</span>(app) {
+
+    app.http.get(<span class="string">'/'</span>, <span class="keyword">function</span>(req, res){
+        res.send(<span class="string">'express on broadway'</span>);
+    });
+
+};</code></pre>
+<h2>broadway.concat(express)</h2>
+<p>Next we&#39;ll create a broadway application and toss in our http plugin.
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// app.js</span>
+
+<span class="keyword">var</span> broadway = <span class="keyword">require</span>(<span class="string">'broadway'</span>),
+    app = <span class="keyword">new</span> broadway.App();
+
+app.<span class="keyword">use</span>(<span class="keyword">require</span>(<span class="string">'./http'</span>));
+
+app.init(<span class="keyword">function</span>(err) {
+    app.http.listen(<span class="number">8080</span>);
+});</code></pre>
+<p>You can also just <code>module.exports = app.http</code> if you&#39;re using something like <code>up</code> and need to export an http server from your main applicaiton.
+
+</p>
+<h2>krakens.release()</h2>
+<p>Finally, fire up your application
+
+</p>
+<pre><code>&gt;node app.js</code></pre>
+<p>That&#39;s all there is to it.  In this example, the http server is just one piece of our application, and we can bolt on additional functionality as needed through more plugins.
+
+
+</p>
+
+</div></article><article><h2><a href="/2012/09/18/decoupling-your-node-js-application-with-broadway">decoupling your node.js application with broadway</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/javascript">javascript</a></li><li><a href="/tag/node.js">node.js</a></li><li><a href="/tag/broadway">broadway</a></li><li><a href="/tag/decoupling">decoupling</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Tuesday September 18, 2012</div><div class="name">By Brad Harris</div></div><div class="content"><h2>the why</h2>
+<p>Why should you worry about decoupling your node.js application?  Can&#39;t you just use the module pattern and <code>require()</code> away?  Sure, sort of...until your application starts to grow, and module&#39;s begin to have cross dependencies.  In reality, you can avoid cross dependencies between modules for most small to medium sized applications, but as your application grows, you may run into <a href="/2012/05/08/node-js-circular-dependencies/">cyclic</a> <a href="http://nodejs.org/api/modules.html#modules_cycles">dependencies</a>, which can be hard to decipher and debug.  Without going into detail on what those are (follow those links if you&#39;re wondering), I present, a contrived example.
+
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> ModuleA = <span class="keyword">require</span>(<span class="string">'module-a'</span>),
+    ModuleB = <span class="keyword">require</span>(<span class="string">'module-b'</span>);
+
+<span class="keyword">var</span> ModuleC = module.exports = <span class="keyword">function</span>() {
+    <span class="keyword">this</span>.myB = <span class="keyword">new</span> ModuleB();
+};
+
+ModuleC.prototype = {
+
+    <span class="comment">/** amazin' function! */</span>
+    amazinFunction : <span class="keyword">function</span>() {
+        <span class="keyword">if</span>(ModuleA.isAmazin(<span class="keyword">this</span>.myB) {
+            <span class="keyword">this</span>.beginAwesomness();
+        }<span class="keyword">else</span> {
+            <span class="keyword">this</span>.sadPanda();
+        }
+    },
+
+    beginAwesomness : <span class="keyword">function</span>() { <span class="comment">/** awesome stuff */</span> },
+
+    sadPanda : <span class="keyword">function</span>() { <span class="comment">/** sad stuff */</span> }
+
+};</code></pre>
+<p>Here <code>ModuleC</code> is exported, and is a pretty basic function/prototype that has some required dependencies.  The principle of dependency injection would tell us that instead of ModuleC being responsible for loading ModuleA and ModuleB, those should be injected into it somehow.  <a href="http://github.com/flatiron/broadway">Broadway</a> is a fantastic library to help with this.
+
+</p>
+<h2>broadway</h2>
+<p>At it&#39;s core, <a href="http://github.com/flatiron/broadway">Broadway</a> provides a plugin architecture for applications, and a consistent way to manage and add functionality.  It also gives us a nice platform for dependency injection, and inversion of control, letting the modules alter and build on the application instead of the application being responsible to build everything and pull in your modules&#39; functionality.  If you&#39;re interested in this concept, <a href="http://blog.nodejitsu.com/ioc-and-dependency-injection-with-broadway">this article</a> from the Nodejitsu blog is super informative.
+
+</p>
+<p>So, let&#39;s start with a basic Broadway application, and load up a plugin that we&#39;ll define below.
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> broadway = <span class="keyword">require</span>(<span class="string">'broadway'</span>),
+    app = <span class="keyword">new</span> broadway.App();
+
+app.<span class="keyword">use</span>(<span class="keyword">require</span>(<span class="string">'myposse'</span>));
+
+app.init(<span class="keyword">function</span>(err) {
+    <span class="comment">// we're all setup, gtg</span>
+});</code></pre>
+<p>A basic Broadway plugin might look something like...
+
+</p>
+<pre><code class="lang-javascript"><span class="comment">// myposse.js</span>
+
+<span class="keyword">var</span> MyPosse = exports;
+
+MyPosse.name = <span class="string">'myposse'</span>;
+
+MyPosse.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    <span class="comment">// here we can add some functionality to the app</span>
+    app.posse = <span class="keyword">function</span>() {
+        console.log(<span class="string">"my posse's on broadway"</span>);
+    };
+};
+
+MyPosse.init = <span class="keyword">function</span>(done) {
+    <span class="comment">// handle any asynchronous initilization</span>
+    done();
+};</code></pre>
+<p>RIP MCA.  Inside our <code>attach</code> function is where we can pull in our related modules, and expose them to the application.  Notice how we&#39;re calling the result of the require statement of each module, passing in the Broadway application, and setting that onto the application itself.
+
+</p>
+<pre><code class="lang-javascript">MyPosse.attach = <span class="keyword">function</span>(options) {
+    <span class="keyword">var</span> app = <span class="keyword">this</span>;
+
+    app.ModuleA = <span class="keyword">require</span>(<span class="string">'module-a'</span>)(app);
+    app.ModuleB = <span class="keyword">require</span>(<span class="string">'module-b'</span>)(app);
+    app.ModuleC = <span class="keyword">require</span>(<span class="string">'module-c'</span>)(app);
+
+};</code></pre>
+<p>We would want to rework our above example of ModuleC to allow for this change, which also lets us remove the require statements for ModuleA and ModuleB, and pull them in as dependencies from the <code>app</code> object.
+
+</p>
+<pre><code class="lang-javascript">module.exports = <span class="keyword">function</span>(app) {
+
+    <span class="keyword">var</span> ModuleA = app.ModuleA,
+        ModuleB = app.ModuleB;
+
+    <span class="keyword">var</span> ModuleC = <span class="keyword">function</span>() {
+        <span class="keyword">this</span>.myB = <span class="keyword">new</span> ModuleB();
+    };
+
+    ModuleC.prototype = {
+
+        <span class="comment">/** amazin' function! */</span>
+        amazinFunction : <span class="keyword">function</span>() {
+            <span class="keyword">if</span>(ModuleA.isAmazin(<span class="keyword">this</span>.myB) {
+                <span class="keyword">this</span>.beginAwesomness();
+            }<span class="keyword">else</span> {
+                <span class="keyword">this</span>.sadPanda();
+            }
+        },
+
+        beginAwesomness : <span class="keyword">function</span>() { <span class="comment">/** awesome stuff */</span> },
+
+        sadPanda : <span class="keyword">function</span>() { <span class="comment">/** sad stuff */</span> }
+
+    };
+
+    <span class="keyword">return</span> ModuleC;
+
+};</code></pre>
+<p>With Broadway you can organize your application&#39;s modules and expose their functionality to the application via plugins.  I&#39;ve found it a great way to organize services, models, and other application resources, and expose them to the application without coupling them directly to eachother via <code>require</code> statements.  There&#39;s definitely a place for modules that are independant enough to be <code>require()&#39;d</code> at will, but I&#39;ve also found that there&#39;s a place for application specific modules that are best managed at an application level.
+
+</p>
+<p>There&#39;s a lot more <a href="http://github.com/flatiron/broadway">Broadway</a> has to offer (such as application events), so check it out if you&#39;re building large applications on node.js.
+
+
+</p>
+
+</div></article></section><aside class="sidebar"><div class="about"><img src="/images/bradharris.gif" width="100" height="100" align="left"><p>	My name is Brad Harris and I'm an engineer @ Yahoo!
+	I love architecting software and developing simple and elegant solutions to complex problems. I
+	've worked for companies on large enterprise projects, as well as smaller projects, and fine satisfaction across the board.
+	I enjoy learning and applying new principles and patterns to my work.
+</p></div><h3>recent articles</h3><ul><li><a href="/2013/09/14/flipflop-0.1.0-configurable-urls">flipflop 0.1.0 - configurable urls</a><div class="date">Saturday September 14, 2013</div></li><li><a href="/2012/09/20/using-express-with-broadway">using express with broadway</a><div class="date">Thursday September 20, 2012</div></li><li><a href="/2012/09/18/decoupling-your-node-js-application-with-broadway">decoupling your node.js application with broadway</a><div class="date">Tuesday September 18, 2012</div></li><li><a href="/2012/09/01/hello-fabric">hello fabric</a><div class="date">Saturday September 1, 2012</div></li><li><a href="/2012/05/08/node-js-circular-dependencies">node.js and circular dependencies</a><div class="date">Tuesday May 8, 2012</div></li><li><a href="/2012/04/27/backup-iphoto-with-google-drive">google.drive.backup(iphoto.library)</a><div class="date">Friday April 27, 2012</div></li><li><a href="/2012/04/14/makdown-powered-blogs">markdown powered blogs</a><div class="date">Saturday April 14, 2012</div></li><li><a href="/2012/04/04/node-js-clusters">node.js clusters</a><div class="date">Wednesday April 4, 2012</div></li><li><a href="/2011/07/08/markdown-me">markdown.me</a><div class="date">Friday July 8, 2011</div></li><li><a href="/2011/05/28/phpunit-mocks-and-closures">PHPUnit, Mocks and Closures</a><div class="date">Saturday May 28, 2011</div></li><li><a href="/2011/04/20/php-and-an-abstract-singleton">PHP and an abstract Singleton</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/04/20/review-yahoo-user-interface-library-2-x-cookbook">Review: Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/02/28/awaiting-yahoo-user-interface-library-2-x-cookbook">Awaiting Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Monday February 28, 2011</div></li><li><a href="/2011/01/23/latest-endeavor-whoopdwhoop-com">Latest Endeavor: whoopdwhoop.com</a><div class="date">Sunday January 23, 2011</div></li><li><a href="/2010/11/30/php-coalesce">?: PHP Coalesce</a><div class="date">Tuesday November 30, 2010</div></li><li><a href="/2010/11/19/yui-jquery">YUI =&gt; jQuery?</a><div class="date">Friday November 19, 2010</div></li><li><a href="/2010/10/22/yahoo-new-adventure">Yahoo!  A New Adventure</a><div class="date">Friday October 22, 2010</div></li><li><a href="/2010/09/04/yui-2-8-learning-the-library-book-review">YUI 2.8 Learning the Library book review</a><div class="date">Saturday September 4, 2010</div></li><li><a href="/2010/08/13/yui-2-8-learning-the-library-free-chapter">&quot;YUI 2.8: Learning the Library&quot; Free Chapter</a><div class="date">Friday August 13, 2010</div></li><li><a href="/2010/05/08/first-iphone-app-lds-gems">First iPhone App - LDS Gems</a><div class="date">Saturday May 8, 2010</div></li><li><a href="/2010/03/30/doctrine-model-hydration">Doctrine Model Hydration</a><div class="date">Tuesday March 30, 2010</div></li><li><a href="/2009/09/16/getting-keycode-values-in-javascript">Getting keycode values in Javascript</a><div class="date">Wednesday September 16, 2009</div></li><li><a href="/2009/01/23/scoping-javascript-closures-in-loops">Scoping Javascript closures in loops</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/23/browser-autocomplete-and-keyup-events">Browser autocomplete and keyup events</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/22/followup-on-yui-getfirstdescendantby">Followup on YUI : getFirstDescendantBy()</a><div class="date">Thursday January 22, 2009</div></li></ul><h3>links</h3><ul><li><a href="/archive">archive</a></li><li><a href="/feed/rss.xml">feed</a></li></ul></aside></div><footer>	&copy; 2012 Brad Harris |
+	powered by
+<a href="https://github.com/selfcontained/flipflop">flipflop</a></footer></div><script type="text/javascript">var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-254292-12']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script></body></html>

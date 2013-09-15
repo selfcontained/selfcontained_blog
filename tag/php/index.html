@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="en"><head><title>php - selfcontained</title><meta name="keywords" content="software,web development,brad harris"><meta name="author" content="Brad Harris"><meta name="robots" content="index,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/css/blog.css" rel="stylesheet"><link rel="alternate" type="application/rss+xml" title="selfcontained » rss" href="http://www.selfcontained.us/feed/rss.xml"></head><body><div id="main"><header><h1><a href="/">selfcontained</a><small>[web development]</small></h1></header><div id="content-container"><section id="content"><h2>Articles tagged with <i>"php"</i> (8)</h2><article><h2><a href="/2011/07/08/markdown-me">markdown.me</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/markdown">markdown</a></li><li><a href="/tag/mongodb">mongodb</a></li><li><a href="/tag/php">php</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Friday July 8, 2011</div><div class="name">By Brad Harris</div></div><div class="content"><p><a href="http://daringfireball.net/projects/markdown/">Markdown</a> is a great shorthand syntax for creating HTML, and subsequently, for taking notes.  I often take notes for different situations and use the Markdown syntax to help give them structure and organization.  One thing I found I often wanted was a way to enter that Markdown somewhere, and have it generate an HTML page from it, with a permalink so I could share it or access it later.  The <a href="http://daringfireball.net/projects/markdown/dingus">Markdown dingus</a> provides a great UI for testing out HTML conversion, but doesn&#39;t provide any persistence, so I threw together a pretty quick site that fit my needs.
+
+</p>
+<p><a href="http://markdown.me">markdown.me</a>
+
+</p>
+<p>It&#39;s pretty basic, but you can throw in your Markdown and you end up with a unique url you can share with the generated HTML.  I was too lazy to add a full-blown account registration layer to organize and manage your documents, but did add Facebook login so you can do that if desired.  Perhaps I&#39;ll add other forms of login if anyone else ends up using it.  Anything you put on there is public as well, for now. Here&#39;s the <a href="http://markdown.me/4dfcfc5ec4fee0367a000000">permalink to some notes</a> I took at this year&#39;s Velocity Conference.
+
+</p>
+
+</div></article><article><h2><a href="/2011/05/28/phpunit-mocks-and-closures">PHPUnit, Mocks and Closures</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/php">php</a></li><li><a href="/tag/testing">testing</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Saturday May 28, 2011</div><div class="name">By Brad Harris</div></div><div class="content"><p>I like <a href="http://www.phpunit.de/manual/3.6/en/index.html">PHPUnit</a>, and I like <a href="http://us3.php.net/manual/en/functions.anonymous.php">closures</a>, but haven&#39;t found many useful cases for them (closures) in PHP yet.  Just recently I came across a situation where I needed a closure when working with PHPUnit Mock objects.  For those not familiar with Mock Objects in regards to testing, <a href="http://www.phpunit.de/manual/3.6/en/test-doubles.html#test-doubles.mock-objects">here&#39;s a link</a>.  It&#39;s fairly common when creating a mock object for testing to specify what a function is expected to be called with, and what it will return in that case.  Below I&#39;m creating a mock &#39;User&#39; object that will return 18 for the age however many times it is called.
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> UserTest <span class="keyword">extends</span> PHPUnit_Framework_TestCase{
+
+    <span class="keyword">public</span> <span class="keyword">function</span> testGetAge() {
+        <span class="variable">$user</span> = <span class="variable">$this</span>->getMock(<span class="string">'User'</span>, <span class="keyword">array</span>(<span class="string">'getAge'</span>))
+            ->expects(<span class="variable">$this</span>->any())
+            ->method(<span class="string">'getAge'</span>)
+            ->will(<span class="variable">$this</span>->returnValue(<span class="number">18</span>));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->getAge(), <span class="number">18</span>);
+    }
+
+}</code></pre>
+<p>This is a pretty straight forward example of Mocks, but what happens when the value you want to return is dependent on the value it is called with, and there is some logic required to process this?  This is where closures come in handy.  Let&#39;s say you have a dynamic array you&#39;ve built up, and you want to return true if a particular function, <strong>hasValue</strong> is called with a value that exists in that array.  Here&#39;s how you can do it with <strong>Mocks</strong> and <strong>closures</strong>, using the <strong>returnCallback</strong> functionality of PHPUnit:
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> UserTest <span class="keyword">extends</span> PHPUnit_Framework_TestCase{
+
+    <span class="keyword">public</span> <span class="keyword">function</span> testInArray() {
+        <span class="variable">$values</span> = <span class="keyword">array</span>(<span class="number">1</span>,<span class="number">10</span>,<span class="number">78</span>,<span class="number">30</span>);
+        <span class="variable">$user</span> = <span class="variable">$this</span>->getMock(<span class="string">'User'</span>, <span class="keyword">array</span>(<span class="string">'hasValue'</span>))
+            ->expects(<span class="variable">$this</span>->any())
+            ->method(<span class="string">'hasValue'</span>)
+            ->with(<span class="variable">$this</span>->anything())
+            ->will(<span class="variable">$this</span>->returnCallback(<span class="keyword">function</span>(<span class="variable">$value</span>) <span class="keyword">use</span> (<span class="variable">$values</span>){
+                <span class="keyword">return</span> in_array(<span class="variable">$value</span>, <span class="variable">$values</span>);
+            }));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->hasValue(<span class="number">10</span>));
+        <span class="variable">$this</span>->assertTrue(<span class="variable">$user</span>->hasValue(<span class="number">99</span>) == <span class="keyword">false</span>);
+    }
+
+}</code></pre>
+<p>When I call <strong>hasValue</strong>, passing in 10, we&#39;ll get true, and with 99 it&#39;s false.  This is checked at runtime when the closure is executed, checking against the <strong>$values</strong> array.  Also, stay away from <a href="http://canvasrider.com/tracks/featured">Canvas Rider</a>, it&#39;s dangerously addictive.
+
+</p>
+
+</div></article><article><h2><a href="/2011/04/20/php-and-an-abstract-singleton">PHP and an abstract Singleton</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/php">php</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Wednesday April 20, 2011</div><div class="name">By Brad Harris</div></div><div class="content"><p>PHP is quirky.  I&#39;ve heard it called other things, but I&#39;ll leave it at that.  I had a great learning experience while writing an abstract singleton class.  Static binding in PHP behaves uniquely, and is often a hurdle when you try and develop an kind of an API using inheritance and static properties.  If you aren&#39;t familiar with static binding in PHP, <a href="http://us3.php.net/lsb">read the doc on late static binding</a> and it will give you a good overview.  This issue came up while creating an abstract singleton class.
+
+</p>
+<p>Let me explain by example.  Here&#39;s my first pass at a simple abstract singleton class that I could theoretically extend from other classes, and just pick up &quot;singleton&quot; behavior.  Disclaimer!!! Don&#39;t use this class, it doesn&#39;t work!
+
+</p>
+<pre><code class="lang-php"><span class="keyword">abstract</span> <span class="keyword">class</span> Singleton {
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="variable">$instance</span> = <span class="keyword">null</span>;
+
+    <span class="keyword">final</span> <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">function</span> getInstance() {
+
+        <span class="keyword">if</span>(<span class="keyword">static</span>::<span class="variable">$instance</span> === <span class="keyword">null</span>) {
+            <span class="keyword">static</span>::<span class="variable">$instance</span> = <span class="keyword">new</span> <span class="keyword">static</span>();
+        }
+        <span class="keyword">return</span> <span class="keyword">static</span>::<span class="variable">$instance</span>;
+    }
+
+    <span class="keyword">protected</span> <span class="keyword">function</span> __construct() { }
+
+}</code></pre>
+<p>This worked, initially, until I created two classes that extended <code>Singleton</code> and found the second one I called behaved remarkably like the first one.
+
+</p>
+<pre><code class="lang-php"><span class="keyword">class</span> FirstSingleton <span class="keyword">extends</span> Singleton {
+...
+}
+<span class="keyword">class</span> SecondSingleton <span class="keyword">extends</span> Singleton {
+...
+}</code></pre>
+<p>Any calls to <code>SecondSingleton::getInstace()</code> were really just returning the <code>FirstSingleton</code> instance.  Since the <code>private static $instance</code> property is delcared on the abstract <code>Singleton</code> class, there was really just one <code>$instance</code> being stored across calls to <code>getInstance()</code> from various subclasses.  PHP doesn&#39;t bind the <code>$instance</code> property to the called class, it is bound to the class where it is declared, <code>Singleton</code> in this case.  You <em>could</em> declare the <code>$instance</code> property on all classes that extend <code>Singleton</code>, but that is defeating the point of the abstract class.  Here&#39;s round two, which does work, but I have mixed feelings about:
+
+</p>
+<pre><code class="lang-php"><span class="keyword">abstract</span> <span class="keyword">class</span> Singleton {
+
+    <span class="keyword">private</span> <span class="keyword">static</span> <span class="variable">$instances</span>;
+
+    <span class="keyword">final</span> <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">function</span> getInstance() {
+        <span class="variable">$className</span> = get_called_class();
+
+        <span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>]) == <span class="keyword">false</span>) {
+            <span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>] = <span class="keyword">new</span> <span class="keyword">static</span>();
+        }
+        <span class="keyword">return</span> <span class="keyword">self</span>::<span class="variable">$instances</span>[<span class="variable">$className</span>];
+    }
+
+    <span class="keyword">protected</span> <span class="keyword">function</span>  __construct() { }
+
+}</code></pre>
+<p>The change here is that instead of storing a single <code>$instance</code> property on the abstract <code>Singleton</code> class, we&#39;re storing an array of instances, indexed by the class name of the called class.  It behaves as expected, but the code isn&#39;t as clear or clean as I would have hoped it would be.
+
+</p>
+
+</div></article><article><h2><a href="/2011/01/23/latest-endeavor-whoopdwhoop-com">Latest Endeavor: whoopdwhoop.com</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/doctrine">doctrine</a></li><li><a href="/tag/javascript">javascript</a></li><li><a href="/tag/minify">minify</a></li><li><a href="/tag/php">php</a></li><li><a href="/tag/yui">yui</a></li><li><a href="/tag/zend">zend</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Sunday January 23, 2011</div><div class="name">By Brad Harris</div></div><div class="content"><p><a href="http://whoopdwhoop.com"><img src="/images/whoopdwhoop.png" alt=""></a>
+
+</p>
+<p>My wife and I have been chugging away on a new endeavor for awhile, and we finally got to a point where we could launch it live.  In short, it&#39;s a currency free, creative marketplace, and it&#39;s called <a href="http://whoopdwhoop.com">whoopdwhoop.com</a>.  It gives &quot;artisans&quot;, or crafty people, a place to list their creations, and hopefully, a community where they can swap their creations with others all without exchanging any currency.  This is facilitated through a pretty simple &quot;whoop&quot; (read point) based system.  As people request a creation from someone, they pay them in &quot;whoops&quot;, and then that person can use those &quot;whoops&quot; to request other creations.  We haven&#39;t pushed much of a marketing campaign at it yet, in hopes to gauge initial feedback before doing so, and fix or improve whatever came up.  We&#39;ve done a fair amount of that so far, and are pretty happy with it&#39;s current state.  Needless to say, we can&#39;t speak to if it will catch on and be the start of a thriving community, we&#39;ll have to wait and see.
+
+</p>
+<p>While I don&#39;t think the majority of my blog&#39;s reader-base would be interested in using the site itself, I wanted to make a quick post to point out how the development of it has gone, which will hopefully be of more interest to those reading.
+
+</p>
+<p>I built the site in about 4 or 5 months of actual heads-down, after-hours work.  I have a day job, so this is just something I&#39;ve spent nights and weekends putting time into.  It&#39;s built on <a href="http://zendframework.com/">Zend Framework</a> MVC, which I absolutely love.  The UI is enhanced through YUI, which is another favorite library of mine.  The database is MySQL, and I&#39;m also using <a href="http://www.doctrine-project.org/">Doctrine ORM</a>.
+
+</p>
+<p>Zend Framework and Doctrine, in my mind, are a great marriage of libraries for PHP.  Zend handles everything I&#39;ve needed from an MVC, with the additional benefits of providing out-of-the-box API&#39;s for things like ACL, Auth, Caching, Emails and Logging.  Doctrine does a great job at providing a stable and solid ORM, and a great means of managing updates through a simple migration strategy.  The best part about finding a solid framework you enjoy working with, is you eventually end up with a great set of features you&#39;ve built that can be dropped in to any project, giving you quite the head-start.  When I started ( which was actually over a year ago, my motivation comes in spurts), Doctrine 2 was in development, but wasn&#39;t where it is now.  I like the concept they&#39;ve taken with the new version, but currently I&#39;m using their 1.x version.
+
+</p>
+<p>YUI is being used pretty sparingly right now.  I think the only modules being used currently are containers for the dialogs, buttons, and menu.  I need to give a shout out to the <a href="http://code.google.com/p/minify/">Minify</a> library as well, which is handling the JS/CSS minification quite nicely.
+
+</p>
+<p>I have some follow-up posts I plan on writing to go into more detail on some of the items and techniques I used in regards to things like Caching, but until I&#39;ve had more of a chance to put the site through a ringer, I&#39;ll hold off.  Anyways, if you&#39;re building a new site, looking for frameworks, I highly recommend everything I mentioned above.
+
+</p>
+
+</div></article><article><h2><a href="/2010/11/30/php-coalesce">?: PHP Coalesce</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/php">php</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Tuesday November 30, 2010</div><div class="name">By Brad Harris</div></div><div class="content"><p>I&#39;ve often been a fan of Javascript&#39;s way of using the logical OR operator as a coalescing operator, or way to default values.  It&#39;s a very handy operator for shortening ternary expressions.
+
+</p>
+<pre><code class="lang-javascript"><span class="keyword">var</span> myValue = someOtherValue || <span class="keyword">true</span>;</code></pre>
+<p>I just found out in PHP 5.3 they added an operator to do just that.  <code>?:</code>
+
+</p>
+<pre><code class="lang-php"><span class="variable">$myValue</span> = <span class="variable">$someOtherValue</span> ?: <span class="keyword">true</span>;</code></pre>
+<p>That&#39;s all, carry on.
+
+</p>
+<p><a href="http://www.php.net/ChangeLog-5.php#5.3.0">http://www.php.net/ChangeLog-5.php#5.3.0</a>
+</p>
+
+</div></article><article><h2><a href="/2010/10/22/yahoo-new-adventure">Yahoo!  A New Adventure</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/associated content">associated content</a></li><li><a href="/tag/php">php</a></li><li><a href="/tag/yahoo">yahoo</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Friday October 22, 2010</div><div class="name">By Brad Harris</div></div><div class="content"><p>My family and I are getting ready for a new adventure in our lives.  We&#39;ll be moving to Denver where I&#39;m super excited to go work for [Yahoo!][yahoo] and the <a href="http://associatedcontent.com">Associated Content</a> team.  Getting a chance to work for Yahoo, and live and work in the Denver area is the perfect culmination of opportunity and lifestyle that my family and I have been waiting for.  The work and product that the Associated Content team has created, and is developing is something I&#39;m looking forward to being a part of.  With every career move come new experiences and opportunities to learn and contribute, and I&#39;m sure this will prove the same.  On a technical note, I&#39;ll get a chance to continue using the technologies I love, PHP, MySQL, and some HTML/CSS/Javascript goodness.  On a non-technical note, if anyone is looking for a house to buy in Rio Rancho, New Mexico, I know a great one for sale!
+
+</p>
+
+</div></article><article><h2><a href="/2010/03/30/doctrine-model-hydration">Doctrine Model Hydration</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/doctrine">doctrine</a></li><li><a href="/tag/php">php</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Tuesday March 30, 2010</div><div class="name">By Brad Harris</div></div><div class="content"><p>I was just deep into figuring out what was causing a certain bug and wanted to take the time to share my findings.  When working with <a href="http://doctrine-project.org">Doctrine</a> we were having some scattered issues of models that we had loaded from the database, modified, and then they were getting stomped on by the database again before saving, wiping out all modifications we had made.  In this particular case we changed one attribute of a model, then called save.  Our save triggers some validation that checks quite a few relationships and business rules between them.   Somewhere in that process, a new copy of the model we were trying to save was being hydrated from the database, and overwriting our previous version.  This seemed like pretty odd, and unwanted behavior, especially in our situation.
+
+</p>
+<p>After digging around Doctrine&#39;s documentation and user group a bit, I came across an attribute setting that enables/disables this exact feature, <code>Doctrine::ATTR_HYDRATE_OVERWRITE</code>.   By default this is set to true.  If you hydrate a model from the database, and then somewhere later grab that same model through a reference, or a request to the Doctrine_Table, it will overwrite the model that is currently in memory for that key with a clean one from the database.   Setting this attribute to false was a great fix for us, and ensures our code will run as intended.
+
+</p>
+<pre><code class="lang-php"><span class="variable">$doctrine</span> = Doctrine_Manager::getInstance();
+<span class="variable">$doctrine</span>->setAttribute( Doctrine::ATTR_HYDRATE_OVERWRITE, <span class="keyword">false</span> );</code></pre>
+
+</div></article><article><h2><a href="/2007/05/03/php-sessions-in-the-db">PHP Sessions in the db</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/adroit">adroit</a></li><li><a href="/tag/php">php</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Thursday May 3, 2007</div><div class="name">By Brad Harris</div></div><div class="content"><p>I read an article today that I thought was great, and may be the answer to some oddities I&#39;ve experienced lately.  I host my sites on a MediaTemple GridServer account.  Occasionally, as I&#39;m logged into a site I&#39;ve done, my session seems to just get blown away, and I lose my log in credentials.  I noticed this recently as I was working on AdroitAuthentication class and trying to clean up how I was handling user authentication.  I added in cookie handling to allow automatic logins if desired, and this seems to have alleviated the problem I was having with dissapearing sessions.  Anyways, back to the article I read...
+
+</p>
+<p><a href="http://www.devshed.com/c/a/PHP/Storing-PHP-Sessions-in-a-Database/">Storing PHP Sessions in a Database</a>
+
+</p>
+<p>This article described how a common problem with a multiple server environment, which helps for load balancing, is that sessions in PHP are by default stored on the hard disk.  As you bounce around servers from load balancing, those files may not get copied with you, thereby causing your session to either be non-existent, or stale.  A solution is to change PHP to use the database for sessions instead.  Its a great article, and I&#39;m going to give it a shot tonight and make it a feature in Adroit php framework.  After excitingly discussing this with a co-worker of mine, he smiled at me and said he wouldn&#39;t comment on how <a href="http://rubyonrails.org/">Rails</a> has that built into it already.  Its funny how the more I develop Adroit, the more Rails-like features I find myself implementing...  One day I&#39;ll give Rails a shot, but I really love PHP and without people pushing the envelope with it it won&#39;t progress as a language.
+
+</p>
+
+</div></article></section><aside class="sidebar"><div class="about"><img src="/images/bradharris.gif" width="100" height="100" align="left"><p>	My name is Brad Harris and I'm an engineer @ Yahoo!
+	I love architecting software and developing simple and elegant solutions to complex problems. I
+	've worked for companies on large enterprise projects, as well as smaller projects, and fine satisfaction across the board.
+	I enjoy learning and applying new principles and patterns to my work.
+</p></div><h3>recent articles</h3><ul><li><a href="/2013/09/14/flipflop-0.1.0-configurable-urls">flipflop 0.1.0 - configurable urls</a><div class="date">Saturday September 14, 2013</div></li><li><a href="/2012/09/20/using-express-with-broadway">using express with broadway</a><div class="date">Thursday September 20, 2012</div></li><li><a href="/2012/09/18/decoupling-your-node-js-application-with-broadway">decoupling your node.js application with broadway</a><div class="date">Tuesday September 18, 2012</div></li><li><a href="/2012/09/01/hello-fabric">hello fabric</a><div class="date">Saturday September 1, 2012</div></li><li><a href="/2012/05/08/node-js-circular-dependencies">node.js and circular dependencies</a><div class="date">Tuesday May 8, 2012</div></li><li><a href="/2012/04/27/backup-iphoto-with-google-drive">google.drive.backup(iphoto.library)</a><div class="date">Friday April 27, 2012</div></li><li><a href="/2012/04/14/makdown-powered-blogs">markdown powered blogs</a><div class="date">Saturday April 14, 2012</div></li><li><a href="/2012/04/04/node-js-clusters">node.js clusters</a><div class="date">Wednesday April 4, 2012</div></li><li><a href="/2011/07/08/markdown-me">markdown.me</a><div class="date">Friday July 8, 2011</div></li><li><a href="/2011/05/28/phpunit-mocks-and-closures">PHPUnit, Mocks and Closures</a><div class="date">Saturday May 28, 2011</div></li><li><a href="/2011/04/20/php-and-an-abstract-singleton">PHP and an abstract Singleton</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/04/20/review-yahoo-user-interface-library-2-x-cookbook">Review: Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/02/28/awaiting-yahoo-user-interface-library-2-x-cookbook">Awaiting Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Monday February 28, 2011</div></li><li><a href="/2011/01/23/latest-endeavor-whoopdwhoop-com">Latest Endeavor: whoopdwhoop.com</a><div class="date">Sunday January 23, 2011</div></li><li><a href="/2010/11/30/php-coalesce">?: PHP Coalesce</a><div class="date">Tuesday November 30, 2010</div></li><li><a href="/2010/11/19/yui-jquery">YUI =&gt; jQuery?</a><div class="date">Friday November 19, 2010</div></li><li><a href="/2010/10/22/yahoo-new-adventure">Yahoo!  A New Adventure</a><div class="date">Friday October 22, 2010</div></li><li><a href="/2010/09/04/yui-2-8-learning-the-library-book-review">YUI 2.8 Learning the Library book review</a><div class="date">Saturday September 4, 2010</div></li><li><a href="/2010/08/13/yui-2-8-learning-the-library-free-chapter">&quot;YUI 2.8: Learning the Library&quot; Free Chapter</a><div class="date">Friday August 13, 2010</div></li><li><a href="/2010/05/08/first-iphone-app-lds-gems">First iPhone App - LDS Gems</a><div class="date">Saturday May 8, 2010</div></li><li><a href="/2010/03/30/doctrine-model-hydration">Doctrine Model Hydration</a><div class="date">Tuesday March 30, 2010</div></li><li><a href="/2009/09/16/getting-keycode-values-in-javascript">Getting keycode values in Javascript</a><div class="date">Wednesday September 16, 2009</div></li><li><a href="/2009/01/23/scoping-javascript-closures-in-loops">Scoping Javascript closures in loops</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/23/browser-autocomplete-and-keyup-events">Browser autocomplete and keyup events</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/22/followup-on-yui-getfirstdescendantby">Followup on YUI : getFirstDescendantBy()</a><div class="date">Thursday January 22, 2009</div></li></ul><h3>links</h3><ul><li><a href="/archive">archive</a></li><li><a href="/feed/rss.xml">feed</a></li></ul></aside></div><footer>	&copy; 2012 Brad Harris |
+	powered by
+<a href="https://github.com/selfcontained/flipflop">flipflop</a></footer></div><script type="text/javascript">var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-254292-12']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script></body></html>

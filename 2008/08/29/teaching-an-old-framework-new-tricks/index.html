@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><title>Teaching an old Framework new tricks!</title><meta name="keywords" content="ajax,java,javascript,struts"><meta name="author" content="Brad Harris"><meta name="robots" content="index,follow"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="/css/blog.css" rel="stylesheet"><link rel="alternate" type="application/rss+xml" title="selfcontained » rss" href="http://www.selfcontained.us/feed/rss.xml"></head><body><div id="main"><header><h1><a href="/">selfcontained</a><small>[web development]</small></h1></header><div id="content-container"><section id="content"><article><h2><a href="/2008/08/29/teaching-an-old-framework-new-tricks">Teaching an old Framework new tricks!</a></h2><div class="meta"><ul class="tags"><li><a href="/tag/ajax">ajax</a></li><li><a href="/tag/java">java</a></li><li><a href="/tag/javascript">javascript</a></li><li><a href="/tag/struts">struts</a></li></ul><img src="http://www.gravatar.com/avatar/c20763ec853bb1d2eb3e8a08cc5a28b9?s=30.jpg" width="30" height="30"><div class="date">Friday August 29, 2008</div><div class="name">By Brad Harris</div></div><div class="content"><p>In summary, I want to discuss an alternative approach for developing a rich, dynamic UI using Struts1.  The basic approach is:
+
+</p>
+<ul>
+<li>Java Object to JSON string</li>
+<li>JSON String consumed by Javascript</li>
+<li>Manipulate UI, update Javascript model</li>
+<li>On submit of form serialize Javascript model to JSON string</li>
+<li>Set value of hidden input to JSON string</li>
+<li>JSON string to Java Object on server side</li>
+</ul>
+<p>Modern web development frameworks have come a long way, in almost every language.  Many of the current popular frameworks have integrated widgets or processes for building rich ajax powered UI&#39;s with little hand-rolled code.  This makes developing those applications faster and easier.  Unfortunately, we can&#39;t always use the latest and greatest new frameworks as developers.
+
+</p>
+<p>While working on a J2EE web application that was started over 5 years ago, I&#39;ve learned a lot about how frameworks have evolved since then.  When this project was started, Struts 1 was very popular, and a proven framework, so was naturally adopted for the front end.  Over time, many things were built to integrate with Struts 1 and provide custom functionality that was required.  This makes it very difficult, and highly improbable that a new front end framework can be swapped in due to the time and money that would have to be invested.  At some point that may be a necessity, but until then, you have to work with what you have.
+
+</p>
+<p>Building a rich UI using ajax in Struts 1 is ... interesting.  Sruts1 is very form centric, and all of your form inputs in your UI map directly back to some field on your Java form object in one way or another.  This makes it tricky to provide a flexible data structure for a rich UI that may be adding or removing elements.  Try adding/removing elements to your page dynamically, and having them map back to your Struts1 Form in a clean way and you&#39;ll see what I&#39;m talking about.  A recent approach I took to tackling this situation was to depend very little on the framework.
+
+</p>
+<p>Lets say I have a Java object graph I want to load into some front end javascript model to work with in the UI.  I can fetch this asynchronously as the page loads as a JSON payload, or just dump it to the page into the appropriate place so my javascript consumes it.  Either way, I need to make sure its painless to convert this data structure to a JSON string, or create it from a JSON string.  This will make passing it back and forth from the server side to the client side much easier.
+
+</p>
+<p>I can then use this as my front end data model to display, change, remove and add data.  When I&#39;m ready to commit my changes, I then have to get that back to my server side Java action.  Obviously I could also make the persistence portion asynchronous as well, but sometimes thats problematic, as you may have a lot that goes on in the backend and the rendering of a new page (security, alerts, etc.) that you would have to replicate if you were to do this asynchronously.  To keep everything working as normal, one approach is to take your javascript data graph, and serialize it into a json string and set it into an html hidden input.  This input can be mapped back to your Struts form, so back in your action you have a json string you decode and create the appropriate Java objects from.  I&#39;ve found this to be a very useful approach when trying to build a very rich UI on top of an older framework.  In summary, here are the steps followed:
+
+</p>
+<ul>
+<li>Build your data as Java objects that can be serialized into JSON, and created from a JSON string.</li>
+<li>Consume the JSON data into your javascript and work with it as needed in the front end.</li>
+<li>On submit of the form, serialize the Javascript object into a JSON string and set it onto the value of a hidden input</li>
+<li>Get the value of the hidden input on the server side as your framework supports, and convert the JSON string back to your Java objects</li>
+</ul>
+
+</div><div class="comments"><div id="disqus_thread"></div><script type='text/javascript'>disqus_identifier='/2008/08/29/teaching-an-old-framework-new-tricks';disqus_url='http://selfcontained.us/2008/08/29/teaching-an-old-framework-new-tricks';</script><script type="text/javascript">var disqus_shortname = 'selfcontained';
+(function() {
+ var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+ dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+ (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+
+</script><noscript>	Please enable JavaScript to view the
+<a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a href="http://disqus.com" class="dsq-brlink">blog comments powered by<span class="logo-disqus">Disqus</span></a></div></article></section><aside class="sidebar"><div class="about"><img src="/images/bradharris.gif" width="100" height="100" align="left"><p>	My name is Brad Harris and I'm an engineer @ Yahoo!
+	I love architecting software and developing simple and elegant solutions to complex problems. I
+	've worked for companies on large enterprise projects, as well as smaller projects, and fine satisfaction across the board.
+	I enjoy learning and applying new principles and patterns to my work.
+</p></div><h3>recent articles</h3><ul><li><a href="/2013/09/14/flipflop-0.1.0-configurable-urls">flipflop 0.1.0 - configurable urls</a><div class="date">Saturday September 14, 2013</div></li><li><a href="/2012/09/20/using-express-with-broadway">using express with broadway</a><div class="date">Thursday September 20, 2012</div></li><li><a href="/2012/09/18/decoupling-your-node-js-application-with-broadway">decoupling your node.js application with broadway</a><div class="date">Tuesday September 18, 2012</div></li><li><a href="/2012/09/01/hello-fabric">hello fabric</a><div class="date">Saturday September 1, 2012</div></li><li><a href="/2012/05/08/node-js-circular-dependencies">node.js and circular dependencies</a><div class="date">Tuesday May 8, 2012</div></li><li><a href="/2012/04/27/backup-iphoto-with-google-drive">google.drive.backup(iphoto.library)</a><div class="date">Friday April 27, 2012</div></li><li><a href="/2012/04/14/makdown-powered-blogs">markdown powered blogs</a><div class="date">Saturday April 14, 2012</div></li><li><a href="/2012/04/04/node-js-clusters">node.js clusters</a><div class="date">Wednesday April 4, 2012</div></li><li><a href="/2011/07/08/markdown-me">markdown.me</a><div class="date">Friday July 8, 2011</div></li><li><a href="/2011/05/28/phpunit-mocks-and-closures">PHPUnit, Mocks and Closures</a><div class="date">Saturday May 28, 2011</div></li><li><a href="/2011/04/20/php-and-an-abstract-singleton">PHP and an abstract Singleton</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/04/20/review-yahoo-user-interface-library-2-x-cookbook">Review: Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Wednesday April 20, 2011</div></li><li><a href="/2011/02/28/awaiting-yahoo-user-interface-library-2-x-cookbook">Awaiting Yahoo! User Interface Library 2.x Cookbook</a><div class="date">Monday February 28, 2011</div></li><li><a href="/2011/01/23/latest-endeavor-whoopdwhoop-com">Latest Endeavor: whoopdwhoop.com</a><div class="date">Sunday January 23, 2011</div></li><li><a href="/2010/11/30/php-coalesce">?: PHP Coalesce</a><div class="date">Tuesday November 30, 2010</div></li><li><a href="/2010/11/19/yui-jquery">YUI =&gt; jQuery?</a><div class="date">Friday November 19, 2010</div></li><li><a href="/2010/10/22/yahoo-new-adventure">Yahoo!  A New Adventure</a><div class="date">Friday October 22, 2010</div></li><li><a href="/2010/09/04/yui-2-8-learning-the-library-book-review">YUI 2.8 Learning the Library book review</a><div class="date">Saturday September 4, 2010</div></li><li><a href="/2010/08/13/yui-2-8-learning-the-library-free-chapter">&quot;YUI 2.8: Learning the Library&quot; Free Chapter</a><div class="date">Friday August 13, 2010</div></li><li><a href="/2010/05/08/first-iphone-app-lds-gems">First iPhone App - LDS Gems</a><div class="date">Saturday May 8, 2010</div></li><li><a href="/2010/03/30/doctrine-model-hydration">Doctrine Model Hydration</a><div class="date">Tuesday March 30, 2010</div></li><li><a href="/2009/09/16/getting-keycode-values-in-javascript">Getting keycode values in Javascript</a><div class="date">Wednesday September 16, 2009</div></li><li><a href="/2009/01/23/scoping-javascript-closures-in-loops">Scoping Javascript closures in loops</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/23/browser-autocomplete-and-keyup-events">Browser autocomplete and keyup events</a><div class="date">Friday January 23, 2009</div></li><li><a href="/2009/01/22/followup-on-yui-getfirstdescendantby">Followup on YUI : getFirstDescendantBy()</a><div class="date">Thursday January 22, 2009</div></li></ul><h3>links</h3><ul><li><a href="/archive">archive</a></li><li><a href="/feed/rss.xml">feed</a></li></ul></aside></div><footer>	&copy; 2012 Brad Harris |
+	powered by
+<a href="https://github.com/selfcontained/flipflop">flipflop</a></footer></div><script type="text/javascript">var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-254292-12']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+ var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script></body></html>
