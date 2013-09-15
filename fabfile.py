@@ -7,5 +7,6 @@ env.hosts = ['bmharris@selfcontained.us']
 def publish():
 	with cd('/data/www/selfcontained'):
 		run('git pull')
-		run('flipflop generate')
+		run('npm install')
+		run('./node_modules/.bin/flipflop generate')
 	print('changes published')
