@@ -1,4 +1,4 @@
-I released a new version of [flipflop][] that has support for configurable urls.  Details are in the [readme file][readme], but in short, when you generate a new flipflop blog, part of the config in the `blog.json` file will now include a section for `routes`.  If you have an existing flipflop blog and want to update to the latest, you can add this section to your `blog.json` config file.
+I released a new version of [flipflop][] that has support for configurable urls.  Details are in the [readme file][readme], but in short, when you generate a new flipflop blog, part of the config in the `blog.json` file will now include a section for `routes`.  If you have an existing flipflop blog and want to update to the latest, you can add this section to your `blog.json` config file.  You may also want/need to update a few of your templates, depending on how much you've changed them.  Check [this commit][commit] to see an example of what changes to make.
 
 ```javascript
 "routes": {
@@ -37,3 +37,4 @@ There are a few special things to note with routes:
 
 [flipflop]: http://github.com/selfcontained/flipflop
 [readme]: http://github.com/selfcontained/flipflop/blob/master/README.md#configuring-routes--urls
+[commit]: http://github.com/selfcontained/selfcontained_blog/commit/6b15e6e5f0b2981a8d3868f5862809dadaf32ebf
