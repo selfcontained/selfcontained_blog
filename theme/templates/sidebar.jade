@@ -7,18 +7,20 @@ div.about
 		|	've worked for companies on large enterprise projects, as well as smaller projects, and fine satisfaction across the board.
 		|	I enjoy learning and applying new principles and patterns to my work.
 
-h3 recent articles
+div.recent-articles
+	h3 recent articles
 
-ul
-	each article in recent_articles
+	ul
+		each article in recent_articles
+			li
+				a(href=article.path) #{article.title}
+				div.date #{article.formatted_date}
+
+div.links
+	h3 links
+
+	ul
 		li
-			a(href=article.path) #{article.title}
-			div.date #{article.formatted_date}
-
-h3 links
-
-ul
-	li
-		a(href=blog.routes.archive) archive
-	li
-		a(href=blog.routes.feed) feed
+			a(href=blog.routes.archive) archive
+		li
+			a(href=blog.routes.feed) feed

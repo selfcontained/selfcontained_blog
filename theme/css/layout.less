@@ -15,12 +15,11 @@ body {
 #main {
 	text-align: left;
 	margin: auto;
-	width: 1024px;
 }
 
 header {
 	background: url('/images/selfcontained.png') no-repeat left center;
-	padding: 35px 100px;
+	padding: 35px 0px 35px 100px;
 	h1 {
 		margin: 0px;
 	}
@@ -44,13 +43,30 @@ header {
 aside.sidebar {
 	margin-left: 25px;
 	width: 275px;
-	float: left;
+	position: absolute;
+	right: 0px;
 }
 
 #content {
-	float: left;
-	width: 720px;
+	margin-right: 300px;
 	padding-top: 25px;
+}
+
+@media (max-width: 1050px) {
+	#content {
+		width: 100%;
+		min-width: auto;
+		margin-right: 0px;
+	}
+
+	aside.sidebar {
+		position: relative;
+		width:100%;
+
+		.recent-articles {
+			display:none;
+		}
+	}
 }
 
 footer {
