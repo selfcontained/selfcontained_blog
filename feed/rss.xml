@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"><channel><title>selfcontained</title><link href="http://selfcontained.us"/><author><name>Brad Harris</name></author><item><title>flipflop 0.1.0 - configurable urls</title><link href="http://selfcontained.us/2013/09/14/flipflop-0.1.0-configurable-urls"/><pubDate>Sat Sep 14 2013 16:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
+<rss version="2.0"><channel><title>selfcontained</title><link href="http://selfcontained.us"/><author><name>Brad Harris</name></author><item><title>talk on modern componentized ui</title><link href="http://selfcontained.us/2014/01/14/modern-componentized-ui"/><pubDate>Tue Jan 14 2014 18:39:00 GMT-0700 (MST)</pubDate><description><![CDATA[
+<p>I gave a talk recently at our local <a href="http://www.meetup.com/Denver-JS/events/156056702/">DenverJS Meetup</a> on some interesting ways to componentize your ui code using tools like <a href="http://browserify.org/">browserify</a>.  Here&#39;s the slides - <a href="http://slid.es/bradharris/modern-componentized-ui/">slid.es/bradharris/modern-componentized-ui</a>
+
+</p>
+
+]]></description></item><item><title>flipflop 0.1.0 - configurable urls</title><link href="http://selfcontained.us/2013/09/14/flipflop-0.1.0-configurable-urls"/><pubDate>Sat Sep 14 2013 16:00:00 GMT-0600 (MDT)</pubDate><description><![CDATA[
 <p>I released a new version of <a href="http://github.com/selfcontained/flipflop">flipflop</a> that has support for configurable urls.  Details are in the <a href="http://github.com/selfcontained/flipflop/blob/master/README.md#configuring-routes--urls">readme file</a>, but in short, when you generate a new flipflop blog, part of the config in the <code>blog.json</code> file will now include a section for <code>routes</code>.  If you have an existing flipflop blog and want to update to the latest, you can add this section to your <code>blog.json</code> config file.  You may also want/need to update a few of your templates, depending on how much you&#39;ve changed them.  Check <a href="http://github.com/selfcontained/selfcontained_blog/commit/6b15e6e5f0b2981a8d3868f5862809dadaf32ebf">this commit</a> to see an example of what changes to make.
 
 </p>
